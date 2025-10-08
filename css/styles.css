@@ -1,0 +1,455 @@
+/*!SECTION - 01. CSS 변수 및 기본 설정 */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* 다크 테마 색상 변수 */
+  --bg-dark: #0a0a0a;
+  --bg-card: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --border: #2a2a2a;
+
+  /* 애니메이션 타이밍 */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*!SECTION - 02. 기본 레이아웃 */
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/*!SECTION - 03. 헤더 스타일 */
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+
+  /* 그라디언트 텍스트 효과 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  /* 빛나는 효과 */
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+  }
+  to {
+    filter: drop-shadow(0 0 30px rgba(240, 147, 251, 0.5));
+  }
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/*!SECTION - 04. 컨트롤 버튼 스타일 */
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #2a2a2a;
+  border-color: var(--accent);
+}
+
+/* 모드 선택자 */
+.mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  padding: 0.25rem;
+  border-radius: 12px;
+}
+
+.mode-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.mode-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.mode-htn:hover:not(.active) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+/*!SECTION - 05. 팔레트 컨테이너 */
+
+.palette-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+  min-height: 400px;
+}
+
+/*!SECTION - 06. 색상 카드 */
+
+.color-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 1rem;
+  position: relative;
+  transition: var(--transition);
+  animation: slideIn 0.5s ease-out;
+  border: 2px solid transparent;
+}
+
+.color-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: var(--border);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 색상 프리뷰 영역 */
+.color-preview {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+/* 클릭 리플 효과 */
+.color-preview::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: width 0.6s, height 0.6s;
+}
+
+.color-preview:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* 잠금 버튼 */
+.lock-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+}
+
+.lock-btn:hover {
+  background: rgba(99, 102, 241, 0.8);
+  transform: scale(1.1);
+}
+
+.lock-btn.locked {
+  background: var(--accent);
+}
+
+/* 색상 정보 */
+.color-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.color-code {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.color-code:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.color-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.color-value {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/*!SECTION - 07. 저장된 팔레트 섹션 */
+
+.saved-palettes {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+}
+
+.saved-palettes h2 {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.saved-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.saved-palette {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.saved-palette:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.saved-colors {
+  display: flex;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.saved-color {
+  flex: 1;
+  transition: flex 0.3s;
+}
+
+.saved-color:hover {
+  flex: 1.5;
+}
+
+/* 삭제 버튼 */
+.delete-saved {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(239, 68, 68, 0.9);
+  border: none;
+  color: white;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.saved-palette:hover .delete-saved {
+  display: flex;
+}
+
+/* 비어있는 상태 */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+/*!SECTION - 08. 토스트 메시지 */
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--accent);
+  transform: translateX(400px);
+  transition: transform 0.3s;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+/*!SECTION - 09. 반응형 디자인 */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .palette-container {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  .mode-selector {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    flex: 1;
+    min-width: calc(33.33% - 0.5rem);
+  }
+
+  .toast {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mode-btn {
+    min-width: calc(50% - 0.5rem);
+  }
+}
+
+/*!SECTION - 10. 유틸리티 클래스 */
+
+.hidden {
+  display: none !important;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 스크롤바 커스터마이징 (웹킷 브라우저) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
