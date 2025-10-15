@@ -2,7 +2,7 @@
 
 > 디자이너와 개발자를 위한 올인원 색상 팔레트 생성 및 관리 도구
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Chrome](https://img.shields.io/badge/Chrome-95%2B-green.svg)
 ![Edge](https://img.shields.io/badge/Edge-95%2B-green.svg)
