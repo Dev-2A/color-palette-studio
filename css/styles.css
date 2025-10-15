@@ -1355,3 +1355,424 @@ header {
     transition: none;
   }
 }
+
+/*!SECTION - 색상 조합 점수 스타일*/
+
+/* 점수 배지 (화면 우측 하단) */
+.score-badge {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--bg-card);
+  border: 2px solid var(--accent);
+  border-radius: 50px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.score-badge:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+}
+
+.badge-score {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.badge-grade {
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-shadow: 0 0 10px currentColor;
+}
+
+.score-badge.pulse {
+  animation: scorePulse 0.6s ease;
+}
+
+@keyframes scorePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.score-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.score-modal.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.score-modal .modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.score-modal .modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 2px solid var(--border);
+  transform: translateY(20px);
+  transition: transform 0.3s;
+  z-index: 2001;
+}
+
+.score-modal.show .modal-content {
+  transform: translateY(0);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 닫기 버튼 스타일 */
+.score-modal .modal-close {
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+
+.score-modal .modal-close:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary);
+}
+
+/* 점수 모달 */
+.score-modal-content {
+  max-width: 600px;
+  text-align: center;
+}
+
+/* 총점 표시 */
+.total-score-display {
+  margin: 2rem 0;
+}
+
+.score-circle {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.score-circle svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.score-circle circle:last-child {
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s ease;
+  animation: scoreReveal 1s ease-out;
+}
+
+@keyframes scoreReveal {
+  from {
+    stroke-dasharray: 0 565;
+  }
+}
+
+.score-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.score-number {
+  display: block;
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.score-grade {
+  display: block;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--score-color);
+  text-shadow: 0 0 20px currentColor;
+  margin-top: 0.25rem;
+}
+
+.score-label {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* 세부 점수 */
+.score-details {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.score-item:last-child {
+  margin-bottom: 0;
+}
+
+.score-item-label {
+  min-width: 80px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.score-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+  animation: scoreBarFill 1s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes scoreBarFill {
+  from {
+    width: 0 !important;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.score-value {
+  min-width: 35px;
+  text-align: right;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* 개선 제안 */
+.suggestions {
+  background: rgba(99, 102, 241, 0.1);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.suggestions h4 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.suggestion-item {
+  margin: 0.5rem 0;
+  padding-left: 0.5rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* 점수 기준 설명 */
+.score-explanation {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.score-explanation summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  transition: color 0.3s;
+}
+
+.score-explanation summary:hover {
+  color: var(--accent);
+}
+
+.score-explanation[open] summary {
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.score-explanation ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.score-explanation li {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.score-explanation strong {
+  color: var(--text-primary);
+}
+
+/* 등급별 색상 변수 */
+.score-modal-content[data-grade="S"] {
+  --grade-color: #FFD700;
+}
+
+.score-modal-content[data-grade="A"] {
+  --grade-color: #00D9FF;
+}
+
+.score-modal-content[data-grade="B"] {
+  --grade-color: #00FF88;
+}
+
+.score-modal-content[data-grade="C"] {
+  --grade-color: #FFA500;
+}
+
+.score-modal-content[data-grade="D"] {
+  --grade-color: #FF6B6B;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .score-badge {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .badge-score {
+    font-size: 1rem;
+  }
+  
+  .badge-grade {
+    font-size: 1.2rem;
+  }
+  
+  .score-circle {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .score-number {
+    font-size: 2rem;
+  }
+  
+  .score-grade {
+    font-size: 1.5rem;
+  }
+  
+  .score-item {
+    flex-wrap: wrap;
+  }
+  
+  .score-item-label {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+  
+  .score-bar {
+    flex: 1;
+  }
+  
+  .score-value {
+    min-width: 30px;
+  }
+}
+
+/* 애니메이션 감소 모드 */
+@media (prefers-reduced-motion: reduce) {
+  .score-circle circle:last-child,
+  .score-fill,
+  .score-badge {
+    animation: none;
+  }
+  
+  .score-fill::after {
+    display: none;
+  }
+}
