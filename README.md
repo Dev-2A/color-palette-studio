@@ -27,8 +27,12 @@ Color Palette Studio는 웹 디자인과 개발에 필요한 조화로운 색상
 - 색상 이론 기반 자동 분류 (HSL 색조 값 분석)
 - 디자인 분위기 파악에 유용
 - 호버 시 확대 효과로 직관적 인터페이스
+- **온도 분류 기준:**
+  - 🔥 따뜻한 색: 0-60°, 300-360° (빨강-노랑 계열)
+  - ❄ 차가운 색: 61-299° (초록-파랑-보라 계열)
+  - ⚪ 중립 색상: 채도 < 15% (회색, 베이지 계열)
 
-### 🎯 팔레트 분석 & 점수 시스템 `v2.2 NEW`
+### 🎯 팔레트 분석 & 점수 시스템 `v2.2`
 - **5가지 평가 기준으로 과학적 분석**
   - 대비(Contrast): 색상 간 적절한 대비 비율
   - 조화(Harmony): 색상환에서의 조화로운 관계
@@ -133,6 +137,7 @@ npx http-server
 |------|------|
 | 새 팔레트 생성 | `🎲 새 팔레트 생성` 버튼 또는 `Space` |
 | 팔레트 분석 | `🎯 팔레트 분석` 버튼 또는 점수 배지 클릭 |
+| 색상 온도 확인 | 색상 카드 좌측 상단 아이콘 (🔥/❄/⚪) 호버 |
 | 색상 복사 | 색상 카드 또는 코드 클릭 |
 | 색상 잠금/해제 | 자물쇠 아이콘 클릭 |
 | 팔레트 저장 | `💾 팔레트 저장` 버튼 또는 `Ctrl+S` |
@@ -189,13 +194,13 @@ npx http-server
 
 ### 색상 조화 모드와 점수의 관계
 
-| 모드 | 예상 점수 | 특징 |
-|------|------|------|
-| **보색** | 높은 대비, 중간 조화 | 강렬한 대비로 주목도 높음 |
-| **유사색** | 높은 조화, 낮은 대비 | 자연스럽고 편안한 느낌 |
-| **삼각색** | 균형잡힌 전체 점수 | 다채롭고 활기찬 디자인 |
-| **단색조** | 높은 조화, 낮은 다양성 | 세련되고 일관된 디자인 |
-| **랜덤** | 변동 폭 큼 | 실험적, 창의적 결과 |
+| 모드 | 예상 점수 | 특징 | 온도 분포 |
+|------|------|-------|----------|
+| **보색** | 높은 대비, 중간 조화 | 강렬한 대비로 주목도 높음 | 🔥❄ 혼합 |
+| **유사색** | 높은 조화, 낮은 대비 | 자연스럽고 편안한 느낌 | 같은 온도 |
+| **삼각색** | 균형잡힌 전체 점수 | 다채롭고 활기찬 디자인 | 다양한 온도 |
+| **단색조** | 높은 조화, 낮은 다양성 | 세련되고 일관된 디자인 | 동일 온도 |
+| **랜덤** | 변동 폭 큼 | 실험적, 창의적 결과 | 무작위 |
 
 ### 점수별 활용 가이드
 
@@ -207,12 +212,22 @@ npx http-server
 | 60-69 | C | 실험적 프로젝트 |
 | 0-59 | D | 개선 후 사용 권장 |
 
+### 색상 온도 활용 가이드
+
+|온도 조합 | 분위기 | 추천 용도 |
+|--------|-------|---------|
+| 🔥🔥🔥🔥🔥 | 열정적, 활기찬 | 음식, 스포츠, 엔터테인먼트 |
+| ❄❄❄❄❄ | 차분한, 전문적인 | 의료, 금융, 기술 |
+| 🔥🔥❄❄⚪ | 균형잡힌 | 비즈니스, 교육, 일반 웹사이트 |
+| 🔥❄🔥❄⚪ | 역동적인 | 크리에이티브, 패션, 예술 |
+| ⚪⚪⚪⚪⚪ | 미니멀, 세련된 | 포트폴리오, 럭셔리 브랜드 |
+
 ## 💻 기술 스택
 
 - **HTML5**: 시맨틱 마크업
 - **CSS3**: 커스텀 프로퍼티, Grid, Flexbox, 애니메이션
 - **Vanilla JavaScript**: 프레임워크 없는 순수 구현
-- **분석 알고리즘**: 색상 이론 + WCAG 기준
+- **분석 알고리즘**: 색상 이론 + WCAG 기준 + HSL 온도 분석
 - **Web APIs**:
   - LocalStorage API (팔레트 저장)
   - Clipboard API (복사 기능)
@@ -227,6 +242,7 @@ npx http-server
 |------|--------|---------|--------|------|
 | 기본 기능 | ✅ | ✅ | ✅ | ✅ |
 | 팔레트 분석 | ✅ | ✅ | ✅ | ✅ |
+| 색상 온도 분석 | ✅ | ✅ | ✅ | ✅ |
 | 색상 추출 | ✅ 95+ | ❌ | ❌ | ✅ 95+ |
 | 클립보드 복사 | ✅ | ✅ | ✅ 13.1+ | ✅ |
 | 그라디언트 | ✅ | ✅ | ✅ | ✅ |
@@ -234,11 +250,14 @@ npx http-server
 
 ## 🚧 업데이트 내역
 
-### v2.3.0 (2025.10.15.) `NEW`
+### v2.3.0 (2025.10.15.) `LATEST`
 - ✅ 색상 온도 분석 시스템 (따뜻함/차가움/중립)
 - ✅ 색상 카드에 온도 아이콘 실시간 표시
 - ✅ 온도별 색상 분류 배지
 - ✅ 호버 애니메이션 효과
+- ✅ HSL 색조 기반 자동 온도 판단 알고리즘
+- ✅ 채도 기반 중립 색상 감지
+- ✅ 온도별 활용 가이드 문서화
 
 ### v2.2.0 (2025.10.15.)
 - ✅ AI 수준의 팔레트 분석 시스템
@@ -271,15 +290,19 @@ npx http-server
 
 ## 🔮 향후 개발 계획
 
-### v2.3.0 (예정)
+### v2.4.0 (다음 업데이트 예정)
+- [ ] 랜덤 테마 프리셋 (파스텔, 네온, 자연, 우주)
+- [ ] 팔레트 태그/카테고리 시스템
+- [ ] 색상 이름 표시 기능
+
+### v2.5.0 (계획)
+- [ ] 색각 이상 시뮬레이션 (색맹 모드)
+- [ ] 팔레트 비교 모드
 - [ ] 색상 미세 조정 슬라이더
-- [ ] 커스텀 색상 조화 규칙
-- [ ] 팔레트 비교 기능
 - [ ] CSV/JSON 가져오기
 
-### v3.0.0 (계획)
+### v3.0.0 (장기 계획)
 - [ ] 이미지에서 팔레트 추출
-- [ ] 색각 이상 시뮬레이션
 - [ ] AI 기반 색상 추천 (OpenAI API)
 - [ ] PWA 지원 (오프라인 사용)
 - [ ] 클라우드 동기화
@@ -288,8 +311,8 @@ npx http-server
 
 ## 📊 프로젝트 통계
 
-- ⭐ **총 코드 라인**: ~3,500 lines
-- 📦 **프로젝트 크기**: ~120KB
+- ⭐ **총 코드 라인**: ~3,800 lines
+- 📦 **프로젝트 크기**: ~130KB
 - ⚡ **로딩 속도**: <1초
 - 🎨 **지원 색상**: 16,777,216개
 - 📜 **최대 히스토리**: 50개
@@ -297,6 +320,7 @@ npx http-server
 - 🌈 **그라디언트 타입**: 3종
 - 📥 **내보내기 형식**: 5종
 - 🎯 **분석 기준**: 5가지
+- 🌡 **온도 분류**: 3가지
 - 📈 **점수 범위**: 0-100점
 
 ## 🏆 주요 특징
@@ -331,11 +355,25 @@ MIT License - 자유롭게 사용하실 수 있습니다.
 ```
 MIT License
 
-Copyright (c) 2024 [Your Name]
+Copyright (c) 2024 Color Palette Studio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ## 🙏 감사의 말
@@ -345,6 +383,7 @@ in the Software without restriction...
 - 웹 API 문서: [MDN Web Docs](https://developer.mozilla.org)
 - 그라디언트 영감: [WebGradients](https://webgradients.com)
 - WCAG 가이드라인: [W3C](https://www.w3.org/WAI/WCAG21/quickref/)
+- 색상 온도 이론: [Color Theory](https://www.colormatters.com)
 - 아이콘: Emoji
 
 ## 💬 문의 및 지원
@@ -374,6 +413,23 @@ in the Software without restriction...
 - 팝업 차단 해제
 - Canvas API 지원 브라우저 확인
 
+## 📚 추가 학습 자료
+
+### 색상 이론
+- [Color Theory Basics](https://www.interaction-design.org/literature/topics/color-theory)
+- [Understanding Color](https://www.canva.com/colors/color-wheel/)
+- [Psychology of Color](https://www.verywellmind.com/color-psychology-2795824)
+
+### 접근성
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [Contrast Checker](https://webaim.org/resources/contrastchecker/)
+- [Color Blindness Simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/)
+
+### 웹 디자인
+- [Material Design Color System](https://material.io/design/color)
+- [Tailwind CSS Colors](https://tailwindcss.com/docs/customizing-colors)
+- [CSS Gradient Generator](https://cssgradient.io/)
+
 ---
 
 <p align="center">
@@ -381,9 +437,10 @@ in the Software without restriction...
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dev-2A/color-palette-studio">GitHub</a>
+  <a href="https://github.com/Dev-2A/color-palette-studio">⭐ GitHub</a>
 
 <p align="center">
   <img src="https://img.shields.io/github/stars/Dev-2A/color-palette-studio?style=social" alt="GitHub stars">
   <img src="https://img.shields.io/github/forks/Dev-2A/color-palette-studio?style=social" alt="GitHub forks">
+  <img src="https://img.shields.io/github/watchers/Dev-2A/color-palette-studio?style=social" alt="GitHub watchers">
 </p>
