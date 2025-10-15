@@ -213,6 +213,8 @@ function displayPalette() {
     const rgb = hexToRgb(color);
     const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
 
+    const temperature = analyzeColorTemperature(color);
+
     // 색상 카드 생성
     const card = document.createElement('div');
     card.className = 'color-card';
@@ -221,8 +223,18 @@ function displayPalette() {
         <button class="lock-btn ${lockedColors.has(index) ? 'locked' : ''}" data-index="${index}">
           ${lockedColors.has(index) ? '🔒' : '🔓'}
         </button>
+
+        <div class="color-temperature" title="${temperature.label}">
+          <span class="temp-icon">${temperature.icon}</span>
+        </div>
       </div>
       <div class="color-info">
+        <div class="color-temp-info">
+          <span class="temp-badge" style="background: ${temperature.color}20; color: ${temperature.color};">
+            ${temperature.icon} ${temperature.label}
+          </span>
+        </div>
+
         <div class="color-code" data-value="${color}">
           <span class="color-label">HEX</span>
           <span class="color-value">${color.toUpperCase()}</span>
@@ -2018,4 +2030,60 @@ function updateScoreBadge() {
   // 애니메이션 효과
   scoreBadge.classList.add('pulse');
   setTimeout(() => scoreBadge.classList.remove('pulse'), 600);
+}
+
+//!SECTION - 색상 온도 분석 함수
+
+//NOTE - 색상 온도 계산 (따뜻한 색 vs 차가운 색)
+function getColorTemperature(hex) {
+  const rgb = hexToRgb(hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  // 색조(Hue) 기준으로 온도 판단
+  // 0-60 : 따뜻함
+  // 300-360 : 따뜻함
+  // 61-299 : 차가움
+
+  if ((hsl.h >= 0 && hsl.h <= 60) || (hsl.h >= 300 && hsl.h <= 360)) {
+    return {
+      type: 'warm',
+      icon: '🔥',
+      label: '따뜻한 색',
+      color: '#FF6B6B'
+    };
+  } else {
+    return {
+      type: 'cool',
+      icon: '❄',
+      label: '차가운 색',
+      color: '#4ECDC4'
+    };
+  }
+}
+
+//NOTE - 색상이 중립인지 판단 (회색 계열)
+function isNeutralColor(hex) {
+  const rgb = hexToRgb(hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  // 채도가 낮으면 중립 색상
+  if (hsl.s < 15) {
+    return {
+      type: 'neutral',
+      icon: '⚪',
+      label: '중립 색상',
+      color: '#95A5A6'
+    };
+  }
+
+  return null;
+}
+
+//NOTE - 통합 온도 분석
+function analyzeColorTemperature(hex) {
+  // 먼저 중립 색상인지 체크
+  const neutral = isNeutralColor(hex);
+  if (neutral) return neutral;
+
+  return getColorTemperature(hex);
 }

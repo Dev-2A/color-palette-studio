@@ -2,7 +2,7 @@
 
 > 디자이너와 개발자를 위한 올인원 색상 팔레트 생성 및 관리 도구
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Chrome](https://img.shields.io/badge/Chrome-95%2B-green.svg)
 ![Edge](https://img.shields.io/badge/Edge-95%2B-green.svg)
@@ -20,6 +20,13 @@ Color Palette Studio는 웹 디자인과 개발에 필요한 조화로운 색상
   - 유사색 (Analogous): 인접한 색상들로 조화로운 구성
   - 삼각색 (Triadic): 색환에서 정삼각형을 이루는 색상
   - 단색조 (Monochromatic): 같은 색조의 명도 변화
+
+### 🌡 색상 온도 분석 `v2.3 NEW`
+- **3가지 색상 분류**: 따뜻한 색(🔥) / 차가운 색(❄) / 중립 색(⚪)
+- 실시간 온도 아이콘 표시 (색상 카드 좌측 상단)
+- 색상 이론 기반 자동 분류 (HSL 색조 값 분석)
+- 디자인 분위기 파악에 유용
+- 호버 시 확대 효과로 직관적 인터페이스
 
 ### 🎯 팔레트 분석 & 점수 시스템 `v2.2 NEW`
 - **5가지 평가 기준으로 과학적 분석**
@@ -227,7 +234,13 @@ npx http-server
 
 ## 🚧 업데이트 내역
 
-### v2.2.0 (2025.10.15.) `NEW`
+### v2.3.0 (2025.10.15.) `NEW`
+- ✅ 색상 온도 분석 시스템 (따뜻함/차가움/중립)
+- ✅ 색상 카드에 온도 아이콘 실시간 표시
+- ✅ 온도별 색상 분류 배지
+- ✅ 호버 애니메이션 효과
+
+### v2.2.0 (2025.10.15.)
 - ✅ AI 수준의 팔레트 분석 시스템
 - ✅ 5가지 평가 기준 (대비, 조화, 균형, 다양성, 접근성)
 - ✅ 실시간 점수 배지 표시

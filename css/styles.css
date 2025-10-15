@@ -278,6 +278,90 @@ header {
   font-weight: 600;
 }
 
+/* 색상 온도 표시 */
+.color-temperature {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  cursor: help;
+}
+
+.color-temperature:hover {
+  transform: scale(1.15);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.temp-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* 색상 온도 정보 행 */
+.color-temp-info {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.temp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  transition: var(--transition);
+}
+
+.temp-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 온도별 애니메이션 효과 */
+.temp-icon {
+  display: inline-block;
+  animation: tempPulse 2s ease-in-out infinite;
+}
+
+@keyframes tempPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 반응형: 모바일에서 온도 아이콘 크기 조정 */
+@media (max-width: 768px) {
+  .color-temperature {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .temp-icon {
+    font-size: 1rem;
+  }
+  
+  .temp-badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
 /*!SECTION - 07. 저장된 팔레트 섹션 */
 
 .saved-palettes {
