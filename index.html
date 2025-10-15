@@ -28,6 +28,14 @@
         <span>🎲 새 팔레트 생성</span>
       </button>
 
+      <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>
+        <span>↩ 취소</span>
+      </button>
+
+      <button class="btn btn-secondary" id="redoBtn" onclick="redo()" disabled>
+        <span>↪ 다시</span>
+      </button>
+
       <button class="btn btn-secondary" id="saveBtn">
         <span>💾 팔레트 저장</span>
       </button>
@@ -46,6 +54,11 @@
 
       <button class="btn btn-secondary" onclick="sharePalette()">
         <span>🔗 공유</span>
+      </button>
+
+      <button class="btn btn-secondary" onclick="showHistoryModal()">
+        <span>📜 히스토리</span>
+        <small id="historyCount" class="history-badge">0/50</small>
       </button>
 
       <!-- Color Mode Selector -->

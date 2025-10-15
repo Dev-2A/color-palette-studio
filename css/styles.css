@@ -1090,3 +1090,268 @@ header {
 .gradient-modal-content::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
+
+/*!SECTION - 실행 취소/다시 실행 스타일*/
+
+/* Undo/Redo 버튼 스타일 */
+#undoBtn:disabled,
+#redoBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#undoBtn:not(:disabled):hover,
+#redoBtn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+/* 히스토리 카운트 배지 */
+.history-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  margin-left: 0.3rem;
+  font-weight: normal;
+  vertical-align: middle;
+}
+
+/* 히스토리 모달 스타일 */
+.history-modal-content {
+  max-width: 600px;
+}
+
+.history-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* 히스토리 리스트 */
+.history-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 1.5rem 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--bg-card);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.history-item:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent);
+  transform: translateX(5px);
+}
+
+.history-preview {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.history-color {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: transform 0.2s;
+}
+
+.history-item:hover .history-color {
+  transform: scale(1.1);
+}
+
+.history-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: 1rem;
+}
+
+.history-time {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.history-mode {
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.current-badge {
+  background: var(--accent);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.history-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.history-actions button {
+  flex: 1;
+}
+
+/* 스크롤바 스타일 (히스토리 리스트) */
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* 키보드 단축키 힌트 */
+.undo-redo-hint {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  background: var(--bg-card);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.undo-redo-hint.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.undo-redo-hint kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  margin: 0 0.2rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .history-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+  }
+  
+  .stat-label {
+    margin-bottom: 0;
+  }
+  
+  .stat-value {
+    font-size: 1.2rem;
+  }
+  
+  .history-list {
+    max-height: 300px;
+  }
+  
+  .history-preview {
+    flex-wrap: wrap;
+  }
+  
+  .history-color {
+    width: 25px;
+    height: 25px;
+  }
+  
+  #undoBtn span,
+  #redoBtn span {
+    display: block;
+    font-size: 0.9rem;
+  }
+}
+
+/* 애니메이션 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .history-item,
+  .current-badge {
+    animation: none;
+    transition: none;
+  }
+}
