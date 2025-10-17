@@ -3,6 +3,17 @@
 let currentPalette = [];        // 현재 표시 중인 팔레트
 let lockedColors = new Set();   // 잠긴 색상들의 인덱스
 let currentMode = 'random';     // 현재 색상 조화 모드
+let currentTheme = null;        // 현재 선택된 테마
+let currentFilter = 'all';      // 현재 필터 (all, 태그명)
+let searchQuery = '';           // 검색어
+
+// 인기 태그 프리셋
+const popularTags = [
+  '웹사이트', '앱', '브랜딩', '로고', '포스터',
+  '밝음', '어두움', '모던', '빈티지', '미니멀',
+  '여름', '겨울', '가을', '봄',
+  '비즈니스', '크리에이티브', '자연', '도시'
+];
 
 //!SECTION - 02. DOM 요소 참조
 
@@ -150,11 +161,190 @@ function generateMonochromatic(baseColor) {
   return colors;
 }
 
+// 테마 정의
+const colorThemes = {
+  pastel: {
+    name: '파스텔',
+    icon: '🌸',
+    description: '부드럽고 은은한 색감',
+    settings: {
+      saturation: { min: 20, max: 50 },
+      lightness: { min: 50, max: 70 },
+      hueRanges: null
+    }
+  },
+  neon: {
+    name: '네온',
+    icon: '⚡',
+    description: '강렬하고 눈부신 색감',
+    settings: {
+      saturation: { min: 80, max: 100 },
+      lightness: { min: 50, max: 70 },
+      hueRanges: null
+    }
+  },
+  earth: {
+    name: '자연',
+    icon: '🌿',
+    description: '자연스러운 흙과 나무 색',
+    settings: {
+      saturation: { min: 25, max: 60 },
+      lightness: { min: 30, max: 70 },
+      hueRanges: [
+        { min: 0, max: 60 },
+        { min: 80, max: 160 }
+      ]
+    }
+  },
+  ocean: {
+    name: '바다',
+    icon: '🌊',
+    description: '시원한 바다와 하늘 색',
+    settings: {
+      saturation: { min: 40, max: 80 },
+      lightness: { min: 35, max: 75 },
+      hueRanges: [
+        {min: 170, max: 240 }
+      ]
+    }
+  },
+  space: {
+    name: '우주',
+    icon: '🌌',
+    description: '신비로운 우주 색감',
+    settings: {
+      saturation: { min: 50, max: 90 },
+      lightness: { min: 15, max: 50 },
+      hueRanges: [
+        { min: 230, max: 290 }
+      ]
+    }
+  },
+  sunset: {
+    name: '석양',
+    icon: '🌅',
+    description: '따뜻한 노을 색감',
+    settings: {
+      saturation: { min: 60, max: 95 },
+      lightness: { min: 45, max: 75 },
+      hueRanges: [
+        { min: 0, max: 50 },
+        { min: 330, max: 360 }
+      ]
+    }
+  },
+  forest: {
+    name: '숲',
+    icon: '🌲',
+    description: '깊은 숲의 초록빛',
+    settings: {
+      saturation: { min: 30, max: 70 },
+      lightness: { min: 25, max: 60 },
+      hueRanges: [
+        { min: 80, max: 160 }
+      ]
+    }
+  },
+  candy: {
+    name: '캔디',
+    icon: '🍭',
+    description: '달콤한 사탕 색감',
+    settings: {
+      saturation: { min: 70, max: 100 },
+      lightness: { min: 60, max: 85 },
+      hueRanges: null
+    }
+  }
+};
+
+// 테마에 맞는 HSL 값 생성
+function generateThemeColor(theme) {
+  const settings = colorThemes[theme].settings;
+
+  // 색조(Hue) 결정
+  let hue;
+  if (settings.hueRanges) {
+    // 특정 범위 중 랜덤 선택
+    const range = settings.hueRanges[Math.floor(Math.random() * settings.hueRanges.length)];
+    hue = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+  } else {
+    // 전체 범위에서 랜덤
+    hue = Math.floor(Math.random() * 360);
+  }
+
+  // 채도(Saturation) 결정
+  const saturation = Math.floor(
+    Math.random() * (settings.saturation.max - settings.saturation.min + 1)
+  ) + settings.saturation.min;
+
+  // 명도(lightness) 결정
+  const lightness = Math.floor(
+    Math.random() * (settings.lightness.max - settings.lightness.min + 1)
+  ) + settings.lightness.min;
+
+  return hslToHex(hue, saturation, lightness);
+}
+
+// 테마 팔레트 생성
+function generateThemePalette(theme) {
+  const newPalette = [];
+
+  for (let i = 0; i < 5; i++) {
+    if (lockedColors.has(i) && currentPalette[i]) {
+      // 잠긴 색상 유지
+      newPalette.push(currentPalette[i]);
+    } else {
+      // 테마에 맞는 색상 생성
+      newPalette.push(generateThemeColor(theme));
+    }
+  }
+
+  return newPalette;
+}
+
+// 테마 설정
+function setTheme(theme) {
+  if (theme && colorThemes[theme]) {
+    currentTheme = theme;
+    currentMode = 'random';  // 랜덤 모드로 설정
+    
+    // 모드 버튼 업데이트
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === 'random');
+    });
+    
+    // 테마 버튼 업데이트
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+    
+    // 팔레트 생성
+    currentPalette = generateThemePalette(theme);
+    displayPalette();
+    addToHistory(currentPalette);
+    
+    showToast(`${colorThemes[theme].icon} ${colorThemes[theme].name} 테마 팔레트 생성!`);
+  } else {
+    // 테마 해제
+    currentTheme = null;
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+  }
+}
+
 //!SECTION - 05. 팔레트 생성 및 표시
 
 // 새 팔레트 생성
 function generatePalette() {
   const newPalette = [];
+
+  if (currentTheme && currentMode === 'random') {
+    currentPalette = generateThemePalette(currentTheme);
+    displayPalette();
+    addToHistory(currentPalette);
+    return;
+  }
 
   if (currentMode === 'random') {
     // 랜덤 모드
@@ -201,7 +391,6 @@ function generatePalette() {
 
   currentPalette = newPalette;
   displayPalette();
-
   addToHistory(currentPalette);
 }
 
@@ -299,8 +488,145 @@ function toggleLock(index) {
 
 //!SECTION - 06. 팔레트 저장 및 불러오기
 
-// 팔레트 저장
-function savePalette() {
+// 팔레트 저장 모달 생성
+function showSavePaletteModal() {
+  // 기존 모달이 있으면 제거
+  const existingModal = document.getElementById('savePaletteModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modalHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-content save-palette-modal">
+      <h3>💾 팔레트 저장</h3>
+      <p>팔레트에 이름과 태그를 추가하세요</p>
+
+      <!-- 팔레트 이름 입력 -->
+      <div class="input-group">
+        <label for="paletteName">팔레트 이름 (선택사항)</label>
+        <input
+          type="text"
+          id="paletteName"
+          placeholder="예: 여름 바다 테마"
+          maxlength="50"
+          class="palette-name-input"
+        >
+      </div>
+
+      <!-- 태그 입력 -->
+      <div class="input-group">
+        <label for="paletteTagInput">태그 추가 (선택사항)</label>
+        <div class="tag-input-wrapper">
+          <input
+            type="text"
+            id="paletteTagInput"
+            placeholder="태그 입력 후 Enter"
+            class="tag-input"
+          >
+          <button class="add-tag-btn" onclick="addTagFromInput()">+</button>
+        </div>
+        <div class="selected-tags" id="selectedTags"></div>
+      </div>
+
+      <!-- 인기 태그 -->
+      <div class="input-group">
+        <label>인기 태그</label>
+        <div class="popular-tags">
+          ${popularTags.map(tag => `
+            <button class="popular-tag-btn" onclick="addPopularTag('${tag}')">
+              ${tag}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 버튼 -->
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="confirmSavePalette()">
+          저장
+        </button>
+        <button class="modal-close" onclick="closeSavePaletteModal()">
+          취소
+        </button>
+      </div>
+    </div>
+  `;
+
+  const modalElement = document.createElement('div');
+  modalElement.id = 'savePaletteModal';
+  modalElement.className = 'export-modal';
+  modalElement.innerHTML = modalHTML;
+
+  document.body.appendChild(modalElement);
+
+  // 태그 입력 엔터키 이벤트
+  const tagInput = document.getElementById('paletteTagInput');
+  tagInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTagFromInput();
+    }
+  });
+
+  // 모달 표시 애니메이션
+  setTimeout(() => {
+    modalElement.classList.add('show');
+  }, 10);
+}
+
+// 선택된 태그 배열
+let selectedTags = [];
+
+// 입력란에서 태그 추가
+function addTagFromInput() {
+  const input = document.getElementById('paletteTagInput');
+  const tag = input.value.trim();
+
+  if (tag && !selectedTags.includes(tag)) {
+    selectedTags.push(tag);
+    updateSelectedTagsDisplay();
+    input.value = '';
+  }
+}
+
+// 인기 태그 추가
+function addPopularTag(tag) {
+  if (!selectedTags.includes(tag)) {
+    selectedTags.push(tag);
+    updateSelectedTagsDisplay();
+  }
+}
+
+// 선택된 태그 표시 업데이트
+function updateSelectedTagsDisplay() {
+  const container = document.getElementById('selectedTags');
+  if (!container) return;
+
+  if (selectedTags.length === 0) {
+    container.innerHTML = '<span class="no-tags">선택된 태그가 없습니다</span>';
+    return;
+  }
+
+  container.innerHTML = selectedTags.map(tag => `
+    <span class="selected-tag">
+      ${tag}
+      <button class="remove-tag-btn" onclick="removeSelectedTag('${tag}')">×</button>
+    </span>
+  `).join('');
+}
+
+// 선택된 태그 제거
+function removeSelectedTag(tag) {
+  selectedTags = selectedTags.filter(t => t !== tag);
+  updateSelectedTagsDisplay();
+}
+
+// 저장 확인
+function confirmSavePalette() {
+  const nameInput = document.getElementById('paletteName');
+  const name = nameInput ? nameInput.value.trim() : '';
+
   const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
 
   // 중복 체크
@@ -310,13 +636,18 @@ function savePalette() {
 
   if (isDuplicate) {
     showToast('이미 저장된 팔레트입니다! 🎨');
+    closeSavePaletteModal();
     return;
   }
 
   // 새 팔레트 추가
   saved.unshift({
     colors: currentPalette,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    name: name || null,
+    tags: [...selectedTags],
+    mode: currentMode,
+    theme: currentTheme
   });
 
   // 최대 20개까지만 저장
@@ -325,8 +656,27 @@ function savePalette() {
   }
 
   localStorage.setItem('savedPalettes', JSON.stringify(saved));
+
+  // 초기화
+  selectedTags = [];
+
   loadSavedPalettes();
-  showToast('팔레트가 저장되었습니다! 💾');
+  closeSavePaletteModal();
+  showToast('팔레트가 저장되었습니다! 💾')
+}
+
+// 저장 모달 닫기
+function closeSavePaletteModal() {
+  const modal = document.getElementById('savePaletteModal');
+  if (modal) {
+    modal.remove();
+  }
+  selectedTags = [];
+}
+
+// 팔레트 저장
+function savePalette() {
+  showSavePaletteModal();
 }
 
 // 저장된 팔레트 불러오기
@@ -335,59 +685,204 @@ function loadSavedPalettes() {
 
   if (saved.length === 0) {
     elements.savedPalettes.innerHTML =
-      '<div class="empty-state">저장된 팔레트가 없습니다. 마음에 드는 팔레트를 저장해보세요!</div>';
+      '<div class="empty-state">저장된 팔레트가 없습니다. 마음에 드는 팔레트를 저장해보세요!</div>'
     return;
   }
 
-  elements.savedPalettes.innerHTML = '';
+  // 필터링 및 검색
+  let filtered = saved;
 
-  saved.forEach((palette, index) => {
-    const div = document.createElement('div');
-    div.className = 'saved-palette';
+  // 태그 필터
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(palette =>
+      palette.tags && palette.tags.includes(currentFilter)
+    );
+  }
 
-    // 색상 표시
-    const colorsDiv = document.createElement('div');
-    colorsDiv.className = 'saved-colors';
-    palette.colors.forEach(color => {
-      const colorDiv = document.createElement('div');
-      colorDiv.className = 'saved-color';
-      colorDiv.style.background = color;
-      colorsDiv.appendChild(colorDiv);
+  // 검색
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(palette => {
+      const name = palette.name ? palette.name.toLowerCase() : '';
+      const tags = palette.tags ? palette.tags.join(' ').toLowerCase() : '';
+      return name.includes(query) || tags.includes(query);
     });
+  }
 
-    div.appendChild(colorsDiv);
+  // 필터/검색 UI 생성
+  const filterHTML = createFilterUI(saved);
 
-    // 삭제 버튼
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-saved';
-    deleteBtn.innerHTML = '×';
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deletePalette(index);
-    });
-    div.appendChild(deleteBtn);
+  if (filtered.length === 0) {
+    elements.savedPalettes.innerHTML =
+      filterHTML +
+      '<div class="empty-state">조건에 맞는 팔레트가 없습니다.</div>';
+    return;
+  }
 
-    // 날짜 표시
-    const date = new Date(palette.timestamp);
-    const dateDiv = document.createElement('div');
-    dateDiv.style.fontSize = '0.8rem';
-    dateDiv.style.color = 'var(--text-secondary)';
-    dateDiv.textContent = date.toLocaleDateString('ko-KR');
-    div.appendChild(dateDiv);
+  // 팔레트 카드 생성
+  const palettesHTML = filtered.map((palette, index) => {
+    const originalIndex = saved.indexOf(palette);
 
-    // 클릭 시 팔레트 불러오기
-    div.addEventListener('click', () => loadSavedPalettes(palette.colors));
+    return `
+      <div class="saved-palette" onclick="loadPalette(${originalIndex})">
+        <!-- 색상 표시 -->
+        <div class="saved-colors">
+          ${palette.colors.map(color => `
+            <div class="saved-color" style="background: ${color};" title="${color}"></div>
+          `).join('')}
+        </div>
 
-    elements.savedPalettes.appendChild(div);
+        <!-- 팔레트 정보 -->
+        <div class="palette-info">
+          ${palette.name ? `<div class="palette-name">${palette.name}</div>` : ''}
+
+          ${palette.tags && palette.tags.length > 0 ? `
+            <div class="palette-tags">
+              ${palette.tags.slice(0, 3).map(tag => `
+                <span class="palette-tag">${tag}</span>
+              `).join('')}
+              ${palette.tags.length > 3 ? `<span class="more-tags">+${palette.tags.length - 3}</span>` : ''}
+            </div>
+          ` : ''}
+
+          <div class="palette-meta">
+            <span class="palette-date">${new Date(palette.timestamp).toLocaleDateString('ko-KR')}</span>
+            ${palette.mode ? `<span class="palette-mode">${getModeLabel(palette.mode)}</span>` : ''}
+            ${palette.theme ? `<span class="palette-theme">${getThemeLabel(palette.theme)}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- 삭제 버튼 -->
+        <button class="delete-saved" onclick="event.stopPropagation(); deletePalette(${originalIndex})">
+          ×
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  elements.savedPalettes.innerHTML = filterHTML + palettesHTML;
+}
+
+// 필터/검색 UI 생성
+function createFilterUI(allPalettes) {
+  // 모든 태그 수집
+  const allTags = new Set();
+  allPalettes.forEach(palette => {
+    if (palette.tags) {
+      palette.tags.forEach(tag => allTags.add(tag));
+    }
   });
+
+  const tagButtons = Array.from(allTags)
+    .sort()
+    .map(tag => {
+      const count = allPalettes.filter(p => p.tags && p.tags.includes(tag)).length;
+      return `
+        <button
+          class="filter-tag ${currentFilter === tag ? 'active' : ''}"
+          onclick="filterByTag('${tag}')"
+        >
+          ${tag} (${count})
+        </button>
+      `;
+    }).join('');
+  
+  return `
+    <div class="palette-filters">
+      <!-- 검색 -->
+      <div class="search-wrapper">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="팔레트 검색..."
+          value="${searchQuery}"
+          oninput="searchPalettes(this.value)"
+        >
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <!-- 태그 필터 -->
+      <div class="filter-tags">
+        <button
+          class="filter-tag ${currentFilter === 'all' ? 'active' : ''}"
+          onclick="filterByTag('all')"
+        >
+          전체 (${allPalettes.length})
+        </button>
+        ${tagButtons}
+      </div>
+
+      <!-- 정렬 옵션 -->
+      <div class="sort-options">
+        <select class="sort-select" onchange="sortPalettes(this.value)">
+          <option value="newest">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="name">이름순</option>
+        </select>
+      </div>
+    </div>
+  `;
+}
+
+// 태그로 필터링
+function filterByTag(tag) {
+  currentFilter = tag;
+  loadSavedPalettes();
+}
+
+// 검색
+function searchPalettes(query) {
+  searchQuery = query;
+  loadSavedPalettes();
+}
+
+// 정렬
+function sortPalettes(sortType) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+
+  if (sortType === 'oldest') {
+    saved.reverse();
+  } else if (sortType === 'name') {
+    saved.sort((a, b) => {
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      return nameA.localeCompare(nameB);
+    });
+  }
+
+  localStorage.setItem('savedPalettes', JSON.stringify(saved));
+  loadSavedPalettes();
+}
+
+// 모드 라벨 가져오기
+function getModeLabel(mode) {
+  const labels = {
+    random: '랜덤',
+    complementary: '보색',
+    analogous: '유사색',
+    triadic: '삼각색',
+    monochromatic: '단색조'
+  };
+  return labels[mode] || mode;
+}
+
+// 테마 라벨 가져오기
+function getThemeLabel(theme) {
+  if (colorThemes[theme]) {
+    return colorThemes[theme].icon + ' ' + colorThemes[theme].name;
+  }
+  return theme;
 }
 
 // 팔레트 불러오기
-function loadPalette(colors) {
-  currentPalette = colors;
-  lockedColors.clear();
-  displayPalette();
-  showToast('팔레트를 불러왔습니다! 🎨');
+function loadPalette(index) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+  if (saved[index]) {
+    currentPalette = saved[index].colors;
+    lockedColors.clear();
+    displayPalette();
+    showToast('팔레트를 불러왔습니다! 🎨');
+  }
 }
 
 // 팔레트 삭제
@@ -431,6 +926,14 @@ function showToast(message) {
 function setMode(mode) {
   currentMode = mode;
 
+  // 조화 모드 선택 시 테마 해제
+  if (mode !== 'random') {
+    currentTheme = null;
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+  }
+
   // 활성 버튼 스타일 업데이트
   elements.modeBtns.forEach(btn => {
     if (btn.dataset.mode === mode) {
@@ -458,6 +961,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // 모드 선택 버튼
   elements.modeBtns.forEach(btn => {
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
+
+  // 테마 선택 버튼
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const theme = this.dataset.theme;
+      setTheme(theme);
+    });
   });
 
   //키보드 단축키
@@ -1663,7 +2174,8 @@ function analyzePalette(palette = currentPalette) {
     harmony: calculateHarmonyScore(palette),
     balance: calculateBalanceScore(palette),
     diversity: calculateDiversityScore(palette),
-    accessibility: calculateAccessibilityScore(palette)
+    accessibility: calculateAccessibilityScore(palette),
+    colorBlindness: calculateColorBlindnessScore(palette)
   };
 
   // 가중 평균으로 총점 계산
@@ -1672,7 +2184,8 @@ function analyzePalette(palette = currentPalette) {
     scores.harmony * 0.25 +
     scores.balance * 0.2 +
     scores.diversity * 0.15 +
-    scores.accessibility * 0.15
+    scores.accessibility * 0.15 +
+    scores.colorBlindness * 0.15
   );
 
   currentPaletteScore = scores;
@@ -1805,6 +2318,32 @@ function calculateAccessibilityScore(palette) {
   });
 
   return Math.round((accessiblePairs / totalPairs) * 100);
+}
+
+//NOTE - 6. 색맹 접근성 점수 계산
+function calculateColorBlindnessScore(palette) {
+  // 3가지 주요 색각 이상 타입에서의 평균 함수
+  const types = ['protanopia', 'deuteranopia', 'tritanopia'];
+  let totalScore = 0;
+
+  types.forEach(type => {
+    let distinctPairs = 0;
+    let totalPairs = 0;
+
+    for (let i = 0; i < palette.length; i++) {
+      for (let j = i + 1; j < palette.length; j++) {
+        totalPairs++;
+        const difference = calculateColorBlindDifference(palette[i], palette[j], type);
+        if (difference > 15) {
+          distinctPairs++;
+        }
+      }
+    }
+
+    totalScore += (distinctPairs / totalPairs) * 100;
+  });
+
+  return Math.round(totalScore / types.length);
 }
 
 //NOTE - 대비 비율 계산 (WCAG 공식)
@@ -1952,6 +2491,14 @@ function showScoreModal() {
           </div>
           <span class="score-value">${scores.accessibility}</span>
         </div>
+
+        <div class="score-item">
+          <span class="score-item-label">색맹 접근성</span>
+          <div class="score-bar">
+            <div class="score-fill" style="width: ${scores.colorBlindness}%; background: var(--accent);"></div>
+          </div>
+          <span class="score-value">${scores.colorBlindness}</span>
+        </div>
       </div>
 
       <!-- 개선 제안 -->
@@ -1969,6 +2516,7 @@ function showScoreModal() {
           <li><strong>균형</strong>: 명도와 채도의 균등한 분포</li>
           <li><strong>다양성</strong>: 색조, 채도, 명도의 다양성</li>
           <li><strong>접근성</strong>: WCAG 가독성 기준 충족도</li>
+          <li><strong>색맹 접근성</strong>: 색각 이상자의 색상 구분 가능성</li>
         </ul>
       </details>
 
@@ -2086,4 +2634,576 @@ function analyzeColorTemperature(hex) {
   if (neutral) return neutral;
 
   return getColorTemperature(hex);
+}
+
+//!SECTION - 색각 이상 시뮬레이션 기능
+
+//NOTE - 색각 이상 타입 정의
+const colorBlindTypes = {
+  normal: {
+    name: '보편 시력',
+    icon: '👁',
+    description: '보편적인 색상 인식',
+    filter: 'none',
+    prevalence: '보편적 사람들'
+  },
+  protanopia: {
+    name: '적색약',
+    icon: '🔴',
+    description: '빨강을 구분하기 어려움',
+    filter: 'url(#protanopia)',
+    prevalence: '남성 1%, 여성 0.01%'
+  },
+  deuteranopia: {
+    name: '녹색약',
+    icon: '🟢',
+    description: '초록을 구분하기 어려움',
+    filter: 'url(#deuteranopia)',
+    prevalence: '남성 1%, 여성 0.01%'
+  },
+  tritanopia: {
+    name: '청색약',
+    icon: '🔵',
+    description: '파랑을 구분하기 어려움',
+    filter: 'url(#tritanopia)',
+    prevalence: '남성/여성 0.001%'
+  },
+  achromatopsia: {
+    name: '전색맹',
+    icon: '⚫',
+    description: '모든 색을 구분하기 어려움',
+    filter: 'url(#achromatopsia)',
+    prevalence: '매우 드묾 (0.003%)'
+  }
+};
+
+//NOTE - 색맹 모드 모달 표시
+function showColorBlindModal() {
+  // 기존 모달이 있으면 제거
+  const existingModal = document.getElementById('colorBlindModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modalHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-content colorblind-modal-content">
+      <h3>👁 색각 이상 시뮬레이션</h3>
+      <p>현재 팔레트가 다양한 색각 이상자에게 어떻게 보이는지 확인하세요</p>
+
+      <!-- 색각 이상 타입 선택 -->
+      <div class="colorblind-type-selector">
+        ${Object.entries(colorBlindTypes).map(([key, type]) => `
+          <button class="colorblind-type-btn ${key === 'normal' ? 'active' : ''}"
+                  data-type="${key}"
+                  onclick="selectColorBlindType('${key}')">
+            <span class="type-icon">${type.icon}</span>
+            <span class="type-name">${type.name}</span>
+          </button>
+        `).join('')}
+      </div>
+
+      <!-- 현재 선택된 타입 정보 -->
+      <div class="colorblind-info" id="colorblindInfo">
+        <div class="info-icon">${colorBlindTypes.normal.icon}</div>
+        <div class="info-content">
+          <h4>${colorBlindTypes.normal.name}</h4>
+          <p>${colorBlindTypes.normal.description}</p>
+          <span class="prevalence">영향: ${colorBlindTypes.normal.prevalence}</span>
+        </div>
+      </div>
+
+      <!-- 팔레트 비교 -->
+      <div class="palette-comparison">
+        <div class="comparison-section">
+          <h4>원본 팔레트</h4>
+          <div class="preview-palette" id="originalPalette">
+            ${currentPalette.map(color => `
+              <div class="preview-color" style="background: ${color};">
+                <span class="color-label">${color}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="comparison-arrow">↓</div>
+
+        <div class="comparison-section">
+          <h4 id="filteredTitle">필터 적용 후</h4>
+          <div class="preview-palette" id="filteredPalette" style="filter: none;">
+            ${currentPalette.map(color => `
+              <div class="preview-color" style="background: ${color};">
+                <span class="color-label">${color}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- 접근성 점수 -->
+      <div class="colorblind-score" id="colorblindScore">
+        <div class="score-header">
+          <span class="score-label">색상 구분 가능성</span>
+          <span class="score-value" id="distinctScore">100%</span>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill" id="distinctFill" style="width: 100%;"></div>
+        </div>
+        <p class="score-description" id="scoreDescription">
+          모든 색상이 명확하게 구분됩니다.
+        </p>
+      </div>
+
+      <!-- 개선 제안 -->
+      <div class="colorblind-suggestions" id="colorblindSuggestions" style="display: none;">
+        <h4>💡 개선 제안</h4>
+        <ul id="suggestionsList"></ul>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="toggleAllFilters()">
+          <span id="toggleFilterText">모든 필터 비교</span>
+        </button>
+        <button class="modal-close">닫기</button>
+      </div>
+    </div>
+  `;
+
+  const modalElement = document.createElement('div');
+  modalElement.id = 'colorBlindModal';
+  modalElement.className = 'score-modal';
+  modalElement.innerHTML = modalHTML;
+
+  document.body.appendChild(modalElement);
+
+  // 이벤트 리스너
+  modalElement.querySelector('.modal-backdrop').addEventListener('click', function() {
+    modalElement.remove();
+  });
+
+  modalElement.querySelector('.modal-close').addEventListener('click', function() {
+    modalElement.remove();
+  });
+
+  // 초기 점수 계산
+  calculateColorDistinction('normal');
+
+  // 모달 표시 애니메이션
+  setTimeout(() => {
+    modalElement.classList.add('show');
+  }, 10);
+}
+
+//NOTE - 색각 이상 타입 선택
+function selectColorBlindType(type) {
+  // 버튼 활성화 상태 업데이트
+  document.querySelectorAll('.colorblind-type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === type);
+  });
+
+  // 정보 업데이트
+  const typeInfo = colorBlindTypes[type];
+  const infoDiv = document.getElementById('colorblindInfo');
+  infoDiv.innerHTML = `
+    <div class="info-icon">${typeInfo.icon}</div>
+    <div class="info-content">
+      <h4>${typeInfo.name}</h4>
+      <p>${typeInfo.description}</p>
+      <span class="prevalence">영향: ${typeInfo.prevalence}</span>
+    </div>
+  `;
+
+  // 필터 적용
+  const filteredPalette = document.getElementById('filteredPalette');
+  filteredPalette.style.filter = typeInfo.filter;
+
+  // 타이틀 업데이트
+  document.getElementById('filteredTitle').textContent =
+    type === 'normal' ? '필터 적용 후' : `${typeInfo.name} 시뮬레이션`;
+
+  // 접근성 점수 계산
+  calculateColorDistinction(type);
+}
+
+//NOTE - 색상 구분 가능성 계산
+function calculateColorDistinction(type) {
+  if (type === 'normal') {
+    updateDistinctionScore(100, '모든 색상이 명확하게 구분됩니다.', []);
+    return;
+  }
+
+  let totalPairs = 0;
+  let distinctPairs = 0;
+  const problematicPairs = [];
+
+  for (let i = 0; i < currentPalette.length; i++) {
+    for (let j = i + 1; j < currentPalette.length; j++) {
+      totalPairs++;
+      
+      const color1 = currentPalette[i];
+      const color2 = currentPalette[j];
+      
+      // 색각 이상에서의 색상 차이 계산
+      const difference = calculateColorBlindDifference(color1, color2, type);
+      
+      // Delta E 기준:
+      // > 2.3: 명확히 구분 가능
+      // 1.0 ~ 2.3: 주의 깊게 보면 구분 가능
+      // < 1.0: 거의 구분 불가능
+      
+      if (difference > 2.3) {
+        distinctPairs++;
+      } else if (difference > 1.0) {
+        distinctPairs += 0.5;  // 부분 점수
+      } else {
+        problematicPairs.push({ 
+          color1, 
+          color2, 
+          difference: difference.toFixed(2),
+          simColor1: simulateColorBlindness(color1, type),
+          simColor2: simulateColorBlindness(color2, type)
+        });
+      }
+    }
+  }
+
+  const score = Math.round((distinctPairs / totalPairs) * 100);
+  
+  // 점수에 따른 설명
+  let description;
+  if (score >= 90) {
+    description = '대부분의 색상이 명확하게 구분됩니다. 훌륭합니다! ✨';
+  } else if (score >= 70) {
+    description = '일부 색상 쌍이 유사하게 보일 수 있습니다. 주의가 필요합니다.';
+  } else if (score >= 50) {
+    description = '여러 색상이 비슷하게 보여 구분이 어려울 수 있습니다. ⚠️';
+  } else {
+    description = '많은 색상이 구분하기 어렵습니다. 개선이 필요합니다. 🚨';
+  }
+
+  // 개선 제안 생성
+  const suggestions = generateColorBlindSuggestions(score, type, problematicPairs);
+
+  updateDistinctionScore(score, description, suggestions);
+}
+
+//NOTE - 정확한 색각 이상 색상 변환 (Brettel 알고리즘)
+
+// RGB를 LMS 색 공간으로 변환하는 행렬
+const RGB_TO_LMS = [
+  [17.8824,  43.5161,   4.1193],
+  [ 3.4557,  27.1554,   3.8671],
+  [ 0.0300,   0.1843,   1.4671]
+];
+
+// LMS를 RGB로 역변환하는 행렬
+const LMS_TO_RGB = [
+  [ 0.0809, -0.1305,  0.1167],
+  [-0.0102,  0.0540, -0.1136],
+  [-0.0004, -0.0041,  0.6935]
+];
+
+// 색각 이상 시뮬레이션 행렬들
+const COLORBLIND_MATRICES = {
+  // 적색약 (Protanopia) - L 원뿔 세포 기능 상실
+  protanopia: [
+    [0.0, 2.02344, -2.52581],
+    [0.0, 1.0,      0.0],
+    [0.0, 0.0,      1.0]
+  ],
+
+  // 녹색약 (Deuteranopia) - M 원뿔 세포 기능 상실
+  deuteranopia: [
+    [1.0,      0.0, 0.0],
+    [0.494207, 0.0, 1.24827],
+    [0.0,      0.0, 1.0]
+  ],
+
+  // 청색약 (Tritanopia) - S 원뿔 세포 기능 상실
+  tritanopia: [
+    [1.0,       0.0,      0.0],
+    [0.0,       1.0,      0.0],
+    [-0.395913, 0.801109, 0.0]
+  ]
+};
+
+// 행렬 곱셈 유틸리티
+function multiplyMatrices(a, b) {
+  const result = [];
+  for (let i = 0; i < a.length; i++) {
+    result[i] = [];
+    for (let j = 0; j < b[0].length; j++) {
+      let sum = 0;
+      for (let k = 0; k < a[0].length; k++) {
+        sum += a[i][k] * b[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+}
+
+// 벡터와 행렬 곱셈
+function multiplyMatrixVector(matrix, vector) {
+  const result = [];
+  for (let i = 0; i < matrix.length; i++) {
+    let sum = 0;
+    for (let j = 0; j < vector.length; j++) {
+      sum += matrix[i][j] * vector[j];
+    }result[i] = sum
+  }
+  return result;
+}
+
+// RGB 값 정규화 (0-1 범위)
+function normalizeRGB(rgb) {
+  return [rgb.r / 255, rgb.g / 255, rgb.b / 255];
+}
+
+// RGB 값 역정규화 (0-255 범위)
+function denormalizeRGB(rgb) {
+  return {
+    r: Math.max(0, Math.min(255, Math.round(rgb[0] * 255))),
+    g: Math.max(0, Math.min(255, Math.round(rgb[1] * 255))),
+    b: Math.max(0, Math.min(255, Math.round(rgb[2] * 255)))
+  };
+}
+
+// RGB를 HEX로 변환 (헬퍼 함수)
+function rgbToHex(rgb) {
+  const toHex = (n) => {
+    const hex = n.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return '#' + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+}
+
+// 색각 이상 시뮬레이션 적용
+function simulateColorBlindness(hex, type) {
+  if (type === 'normal') {
+    return hex;
+  }
+
+  if (type === 'achromatopsia') {
+    // 전색맹: 그레이스케일 변환
+    const rgb = hexToRgb(hex);
+    const gray = Math.round(0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+    return rgbToHex({ r: gray, g: gray, b: gray });
+  }
+
+  // RGB 값 가져오기 및 정규화
+  const rgb = hexToRgb(hex);
+  const normalizedRGB = normalizeRGB(rgb);
+
+  // 1. RGB → LMS 변환
+  const lms = multiplyMatrixVector(RGB_TO_LMS, normalizedRGB);
+
+  // 2. 색각 이상 시뮬레이션 적용
+  const matrix = COLORBLIND_MATRICES[type];
+  if (!matrix) return hex;
+
+  const simulatedLMS = multiplyMatrixVector(matrix, lms);
+
+  // 3. LMS → RGB 역변환
+  const simulatedRGB = multiplyMatrixVector(LMS_TO_RGB, simulatedLMS);
+
+  // 4. RGB 값 정규화 및 HEX 변환
+  const finalRGB = denormalizeRGB(simulatedRGB);
+
+  return rgbToHex(finalRGB);
+}
+
+// RGB를 LAB 색공간으로 변환
+function rgbToLab(rgb) {
+  // 1. RGB → XYZ 변환
+  let r = rgb.r / 255;
+  let g = rgb.g / 255;
+  let b = rgb.b / 255;
+  
+  // 감마 보정
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+  
+  // XYZ 변환 (D65 illuminant)
+  let x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
+  let y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
+  let z = r * 0.0193339 + g * 0.1191920 + b * 0.9503041;
+  
+  // 2. XYZ → LAB 변환
+  // D65 표준 조명 기준값
+  x = x / 0.95047;
+  y = y / 1.00000;
+  z = z / 1.08883;
+  
+  // LAB 변환 함수
+  const labFunc = (t) => t > 0.008856 ? Math.pow(t, 1/3) : (7.787 * t + 16/116);
+  
+  x = labFunc(x);
+  y = labFunc(y);
+  z = labFunc(z);
+  
+  return {
+    l: (116 * y) - 16,
+    a: 500 * (x - y),
+    b: 200 * (y - z)
+  };
+}
+
+//NOTE - 색각 이상에서의 색상 차이 계산
+function calculateColorBlindDifference(color1, color2, type) {
+  // 색각 이상 시뮬레이션 적용
+  const simColor1 = simulateColorBlindness(color1, type);
+  const simColor2 = simulateColorBlindness(color2, type);
+
+  // 시뮬레이션된 색상 간의 유클리드 거리 계산 (CIE76)
+  const rgb1 = hexToRgb(simColor1);
+  const rgb2 = hexToRgb(simColor2);
+
+  // RGB를 LAB 색공간으로 변환하여 더 정확한 지각적 차이 계산
+  const lab1 = rgbToLab(rgb1);
+  const lab2 = rgbToLab(rgb2);
+
+  // Delta E (색상 차이) 계산
+  const deltaL = lab1.l - lab2.l;
+  const deltaA = lab1.a - lab2.a;
+  const deltaB = lab1.b - lab2.b;
+
+  const deltaE = Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
+
+  // Delta E 값 반환
+  return deltaE;
+}
+
+//NOTE - 구분 점수 업데이트
+function updateDistinctionScore(score, description, suggestions) {
+  const scoreValue = document.getElementById('distinctScore');
+  const scoreFill = document.getElementById('distinctFill');
+  const scoreDesc = document.getElementById('scoreDescription');
+  const suggestionsDiv = document.getElementById('colorblindSuggestions');
+  const suggestionsList = document.getElementById('suggestionsList');
+
+  if (scoreValue) scoreValue.textContent = score + '%';
+  if (scoreFill) {
+    scoreFill.style.width = score + '%';
+
+    // 점수에 따른 색상
+    if (score >= 80) {
+      scoreFill.style.background = '#00FF88';
+    } else if (score >= 60) {
+      scoreFill.style.background = '#FFA500';
+    } else {
+      scoreFill.style.background = '#FF6B6B';
+    }
+  }
+  if (scoreDesc) scoreDesc.textContent = description;
+
+  // 개선 제안 표시
+  if (suggestions.length > 0 && suggestionsDiv && suggestionsList) {
+    suggestionsDiv.style.display = 'block';
+    suggestionsList.innerHTML = suggestions.map(s => `<li>${s}</li>`).join('');
+  }else if (suggestionsDiv) {
+    suggestionsDiv.style.display = 'none';
+  }
+}
+
+//NOTE - 개선 제안 생성
+function generateColorBlindSuggestions(score, type, problematicPairs) {
+  const suggestions = [];
+
+  if (score < 80) {
+    suggestions.push('명도(밝기) 차이를 더 크게 하면 구분이 쉬워집니다.')
+  }
+
+  if (score < 60) {
+    suggestions.push('텍스트와 배경은 충분한 대비를 유지하세요.');
+  }
+
+  if (type === 'protanopia' || type === 'deuteranopia') {
+    if (score < 70) {
+      suggestions.push('빨강-초록 조합 대신 파랑-노랑 조합을 사용하세요.');
+    }
+  }
+
+  if (type === 'tritanopia') {
+    if (score < 70) {
+      suggestions.push('파랑-노랑 조합 대신 빨강-초록 조합을 사용하세요.');
+    }
+  }
+
+  if (type === 'achromatopsia') {
+    suggestions.push('명도 차이만으로 정보를 전달할 수 있도록 디자인하세요.');
+  }
+
+  if (problematicPairs.length > 0) {
+    suggestions.push(`${problematicPairs.length}개의 색상 쌍이 유사하게 보입니다. 색상 변경을 고려하세요.`);
+  }
+
+  return suggestions;
+}
+
+//NOTE - 모든 필터 비교 토글
+let showingAllFilters = false;
+
+function toggleAllFilters() {
+  const modal = document.getElementById('colorBlindModal');
+  if (!modal) return;
+
+  showingAllFilters = !showingAllFilters;
+  const toggleText = document.getElementById('toggleFilterText');
+
+  if (showingAllFilters) {
+    // 모든 필터 표시
+    showAllFiltersComparison();
+    if (toggleText) toggleText.textContent = '단일 필터로 돌아가기';
+  } else {
+    // 원래 모달로 복원
+    modal.remove();
+    showColorBlindModal();
+  }
+}
+
+//NOTE - 모든 필터 비교 표시
+function showAllFiltersComparison() {
+  const modal = document.getElementById('colorBlindModal');
+  if (!modal) return;
+
+  const content = modal.querySelector('.colorblind-modal-content');
+
+  const comparisonHTML = `
+    <h3>👁 모든 색각 이상 타입 비교</h3>
+    <p>현재 팔레트가 각 색각 이상 타입에서 어떻게 보이는지 한눈에 확인하세요</p>
+
+    <div class="all-filters-grid">
+      ${Object.entries(colorBlindTypes).map(([key, type]) => `
+        <div class="filter-comparison-card">
+          <div class="card-header">
+            <span class="type-icon">${type.icon}</span>
+            <h4>${type.name}</h4>
+          </div>
+          <div class="preview-palette-small" style="filter: ${type.filter}">
+            ${currentPalette.map(color => `
+              <div class="preview-color-small" style="background: ${color};"></div>
+            `).join('')}
+          </div>
+          <p class="card-description}>${type.description}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="toggleAllFilters()">
+        <span id="toggleFilterText">단일 필터로 돌아가기</span>
+      </button>
+      <button class="modal-close">닫기</button>
+    </div>
+  `;
+
+  content.innerHTML = comparisonHTML;
+
+  // 이벤트 리스너 재설정
+  modal.querySelector('.modal-close').addEventListener('click', function() {
+    modal.remove();
+  });
 }

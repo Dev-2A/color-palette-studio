@@ -14,6 +14,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Color Blind Simulation SVG Filter -->
+  <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+    <defs>
+      <!-- Protanopia Filter -->
+      <filter id="protanopia">
+        <feColorMatrix type="matrix" values="
+          0.567, 0.433, 0.000, 0, 0
+          0.558, 0.442, 0.000, 0, 0
+          0.000, 0.242, 0.758, 0, 0
+          0.000, 0.000, 0.000, 1, 0
+        "/>
+      </filter>
+
+      <!-- Deuteranopia Filter -->
+      <filter id="deuteranopia">
+        <feColorMatrix type="matrix" values="
+          0.625, 0.375, 0.000, 0, 0
+          0.700, 0.300, 0.000, 0, 0
+          0.000, 0.300, 0.700, 0, 0
+          0.000, 0.000, 0.000, 1, 0
+        "/>
+      </filter>
+
+      <!-- Tritanopia Filter -->
+      <filter id="tritanopia">
+        <feColorMatrix type="matrix" values="
+          0.950, 0.050, 0.000, 0, 0
+          0.000, 0.433, 0.567, 0, 0
+          0.000, 0.475, 0.525, 0, 0
+          0.000, 0.000, 0.000, 1, 0
+        "/>
+      </filter>
+
+      <!-- Achromatopsia Filter -->
+      <filter id="achromatopsia">
+        <feColorMatrix type="matrix" values="
+          0.299, 0.587, 0.114, 0, 0
+          0.299, 0.587, 0.114, 0, 0
+          0.299, 0.587, 0.114, 0, 0
+          0.000, 0.000, 0.000, 1, 0
+        "/>
+      </filter>
+    </defs>
+  </svg>
+
   <!-- Header Section -->
   <div class="container">
     <header>
@@ -65,6 +110,10 @@
         <span>🎯 팔레트 분석</span>
       </button>
 
+      <button class="btn btn-secondary" onclick="showColorBlindModal()">
+        <span>👁 색맹 모드</span>
+      </button>
+
       <!-- Color Mode Selector -->
       <div class="mode-selector">
         <button class="mode-btn active" data-mode="random">랜덤</button>
@@ -72,6 +121,45 @@
         <button class="mode-btn" data-mode="analogous">유사색</button>
         <button class="mode-btn" data-mode="triadic">삼각색</button>
         <button class="mode-btn" data-mode="monochromatic">단색조</button>
+      </div>
+
+      <!-- Theme Selector -->
+      <div class="theme-selector">
+        <div class="theme-label">테마 선택:</div>
+        <div class="theme-buttons">
+          <button class="theme-btn" data-theme="pastel" title="부드럽고 은은한 색감">
+            <span class="theme-icon">🌸</span>
+            <span class="theme-name">파스텔</span>
+          </button>
+          <button class="theme-btn" data-theme="neon" title="강렬하고 눈부신 색감">
+            <span class="theme-icon">⚡</span>
+            <span class="theme-name">네온</span>
+          </button>
+          <button class="theme-btn" data-theme="earth" title="자연스러운 흙과 나무 색">
+            <span class="theme-icon">🌿</span>
+            <span class="theme-name">자연</span>
+          </button>
+          <button class="theme-btn" data-theme="ocean" title="시원한 바다와 하늘 색">
+            <span class="theme-icon">🌊</span>
+            <span class="theme-name">바다</span>
+          </button>
+          <button class="theme-btn" data-theme="space" title="신비로운 우주 색감">
+            <span class="theme-icon">🌌</span>
+            <span class="theme-name">우주</span>
+          </button>
+          <button class="theme-btn" data-theme="sunset" title="따뜻한 노을 색감">
+            <span class="theme-icon">🌅</span>
+            <span class="theme-name">석양</span>
+          </button>
+          <button class="theme-btn" data-theme="forest" title="깊은 숲의 초록빛">
+            <span class="theme-icon">🌲</span>
+            <span class="theme-name">숲</span>
+          </button>
+          <button class="theme-btn" data-theme="candy" title="달콤한 사탕 색감">
+            <span class="theme-icon">🍭</span>
+            <span class="theme-name">캔디</span>
+          </button>
+        </div>
       </div>
     </div>
 
