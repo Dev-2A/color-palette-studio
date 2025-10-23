@@ -111,17 +111,18 @@ function generateComplementary(baseColor) {
 }
 
 // 유사색 팔레트 생성
-function generateAlalogous(baseColor) {
+function generateAnalogous(baseColor) {
   const rgb = hexToRgb(baseColor);
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
   const colors = [baseColor];
 
   // 인접한 색상들 (30도씩)
   for (let i = 1; i < 5; i++) {
-    const newHue = (hsl.h + (i * 30) - 60) % 360;
+    let newHue = (hsl.h + (i * 30) - 60) % 360;
+    if (newHue < 0) newHue += 360;
     const newSat = Math.max(20, Math.min(100, hsl.s + (Math.random() - 0.5) * 10));
     const newLight = Math.max(20, Math.min(80, hsl.l + (Math.random() - 0.5) * 15));
-    colors.push(hslToHex(Math.abs(newHue), newSat, newLight));
+    colors.push(hslToHex(newHue, newSat, newLight));
   }
 
   return colors;
@@ -307,22 +308,27 @@ function setTheme(theme) {
   if (theme && colorThemes[theme]) {
     currentTheme = theme;
     currentMode = 'random';  // 랜덤 모드로 설정
-    
+
     // 모드 버튼 업데이트
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === 'random');
     });
-    
+
     // 테마 버튼 업데이트
     document.querySelectorAll('.theme-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.theme === theme);
     });
-    
+
     // 팔레트 생성
     currentPalette = generateThemePalette(theme);
     displayPalette();
     addToHistory(currentPalette);
-    
+
+    // 실시간 비교 모드일 때 업데이트
+    if (typeof compareMode !== 'undefined' && compareMode.liveCompareActive) {
+      setTimeout(() => updateLiveComparison(), 100);
+    }
+
     showToast(`${colorThemes[theme].icon} ${colorThemes[theme].name} 테마 팔레트 생성!`);
   } else {
     // 테마 해제
@@ -343,6 +349,11 @@ function generatePalette() {
     currentPalette = generateThemePalette(currentTheme);
     displayPalette();
     addToHistory(currentPalette);
+
+    // 실시간 비교 모드일 때 업데이트
+    if (typeof compareMode !== 'undefined' && compareMode.liveCompareActive) {
+      setTimeout(() => updateLiveComparison(), 100);
+    }
     return;
   }
 
@@ -367,7 +378,7 @@ function generatePalette() {
         generatedColors = generateComplementary(baseColor);
         break;
       case 'analogous':
-        generatedColors = generateAlalogous(baseColor);
+        generatedColors = generateAnalogous(baseColor);
         break;
       case 'triadic':
         generatedColors = generateTriadic(baseColor);
@@ -392,6 +403,11 @@ function generatePalette() {
   currentPalette = newPalette;
   displayPalette();
   addToHistory(currentPalette);
+
+  // 실시간 비교 모드일 때 업데이트
+  if (typeof compareMode !== 'undefined' && compareMode.liveCompareActive) {
+    setTimeout(() => updateLiveComparison(), 100);
+  }
 }
 
 // 팔레트 화면에 표시
@@ -407,6 +423,7 @@ function displayPalette() {
     // 색상 카드 생성
     const card = document.createElement('div');
     card.className = 'color-card';
+    card.dataset.index = index;
     card.innerHTML = `
       <div class="color-preview" style="background: ${color};">
         <button class="lock-btn ${lockedColors.has(index) ? 'locked' : ''}" data-index="${index}">
@@ -423,6 +440,8 @@ function displayPalette() {
             ${temperature.icon} ${temperature.label}
           </span>
         </div>
+
+        ${showColorNames ? `<div class="color-name">${getColorName(color)}</div>` : ''}
 
         <div class="color-code" data-value="${color}">
           <span class="color-label">HEX</span>
@@ -999,6 +1018,12 @@ document.addEventListener('DOMContentLoaded', () => {
       showHistoryModal();
     }
   });
+
+  // 미세 조정 리스너 초기화
+  initFineTuneListeners();
+
+  // 색상 이름 설정 초기화
+  initColorNameSettings();
 });
 
 //!SECTION - 팔레트 내보내기 기능
@@ -2292,7 +2317,7 @@ function calculateDiversityScore(palette) {
   const lightnesses = hslColors.map(c => c.l);
   const lightSpread = Math.max(...lightnesses) - Math.min(...lightnesses);
 
-  const hueScore = hueSpread > 12 ? 100 : hueSpread > 60 ? 70 : 40;
+  const hueScore = hueSpread > 60 ? 100 : hueSpread > 12 ? 70 : 40;
   const satScore = satSpread > 30 ? 100 : satSpread > 15 ? 70 : 40;
   const lightScore = lightSpread > 30 ? 100 : lightSpread > 15 ? 70 : 40;
 
@@ -2460,7 +2485,7 @@ function showScoreModal() {
           <span class="score-value">${scores.contrast}</span>
         </div>
 
-        <div class="score-item>
+        <div class="score-item">
           <span class="score-item-label">조화</span>
           <div class="score-bar">
             <div class="score-fill" style="width: ${scores.harmony}%; background: var(--accent);"></div>
@@ -2578,6 +2603,11 @@ function updateScoreBadge() {
   // 애니메이션 효과
   scoreBadge.classList.add('pulse');
   setTimeout(() => scoreBadge.classList.remove('pulse'), 600);
+
+  // 실시간 비교 모드일 때 업데이트
+  if (typeof compareMode !== 'undefined' && compareMode.liveCompareActive) {
+    updateLiveComparison();
+  }
 }
 
 //!SECTION - 색상 온도 분석 함수
@@ -2951,7 +2981,8 @@ function multiplyMatrixVector(matrix, vector) {
     let sum = 0;
     for (let j = 0; j < vector.length; j++) {
       sum += matrix[i][j] * vector[j];
-    }result[i] = sum
+    }
+    result[i] = sum;
   }
   return result;
 }
@@ -3187,7 +3218,7 @@ function showAllFiltersComparison() {
               <div class="preview-color-small" style="background: ${color};"></div>
             `).join('')}
           </div>
-          <p class="card-description}>${type.description}</p>
+          <p class="card-description">${type.description}</p>
         </div>
       `).join('')}
     </div>
@@ -3206,4 +3237,1853 @@ function showAllFiltersComparison() {
   modal.querySelector('.modal-close').addEventListener('click', function() {
     modal.remove();
   });
+}
+
+//!SECTION - 팔레트 비교 모드 기능
+
+//NOTE - 비교 모드 전역 변수
+const compareMode = {
+  isActive: false,
+  palette1: null,
+  palette2: null,
+  palette1Name: '팔레트 1',
+  palette2Name: '팔레트 2',
+  liveCompareActive: false,
+  savedPaletteForLive: null,
+  savedPaletteName: ''
+};
+
+//NOTE - 비교 모드 열기
+function openCompareMode() {
+  // 현재 팔레트를 첫 번째 팔레트로 설정
+  compareMode.palette1 = [...currentPalette];
+  compareMode.palette1Name = '현재 팔레트';
+  compareMode.isActive = true;
+  
+  createCompareModal();
+}
+
+//NOTE - 비교 모드 모달 생성
+function createCompareModal() {
+  const existingModal = document.getElementById('compareModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'compareModal';
+  modal.className = 'compare-modal';
+  modal.innerHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-content compare-content">
+      <div class="modal-header">
+        <h3>🔄 팔레트 비교</h3>
+        <button class="modal-close" onclick="closeCompareModal()">✕</button>
+      </div>
+      
+      <div class="compare-container">
+        <!-- 왼쪽 팔레트 -->
+        <div class="compare-palette-section">
+          <div class="palette-header">
+            <h4 id="palette1Name">${compareMode.palette1Name}</h4>
+            <button class="palette-select-btn" onclick="selectPalette(1)">
+              📂 다른 팔레트 선택
+            </button>
+          </div>
+          <div id="comparePalette1" class="compare-palette-display"></div>
+          <div id="palette1Analysis" class="palette-analysis-summary"></div>
+        </div>
+
+        <!-- 중앙 비교 결과 -->
+        <div class="compare-results">
+          <div class="comparison-metrics">
+            <h4>비교 분석</h4>
+            <div id="comparisonDetails"></div>
+          </div>
+        </div>
+
+        <!-- 오른쪽 팔레트 -->
+        <div class="compare-palette-section">
+          <div class="palette-header">
+            <h4 id="palette2Name">팔레트 선택 필요</h4>
+            <button class="palette-select-btn" onclick="selectPalette(2)">
+              📂 팔레트 선택
+            </button>
+          </div>
+          <div id="comparePalette2" class="compare-palette-display">
+            <div class="empty-palette">팔레트를 선택해주세요</div>
+          </div>
+          <div id="palette2Analysis" class="palette-analysis-summary"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 백드롭 클릭 시 닫기
+  const backdrop = modal.querySelector('.modal-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', closeCompareModal);
+  }
+
+  // 첫 번째 팔레트 표시
+  displayComparePalette(1, compareMode.palette1);
+
+  // 모달 애니메이션
+  setTimeout(() => modal.classList.add('show'), 10);
+}
+
+//NOTE - 비교 모달 닫기
+function closeCompareModal() {
+  const modal = document.getElementById('compareModal');
+  if (modal) {
+    modal.classList.remove('show');
+    setTimeout(() => modal.remove(), 300);
+  }
+  compareMode.isActive = false;
+}
+
+//NOTE - 팔레트 선택 (저장된 팔레트 목록 표시)
+function selectPalette(paletteNumber) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+
+  if (saved.length === 0) {
+    showToast('저장된 팔레트가 없습니다! 먼저 팔레트를 저장해주세요.');
+    return;
+  }
+
+  // 팔레트 선택 모달 생성
+  const selectModal = document.createElement('div');
+  selectModal.className = 'palette-select-modal';
+  selectModal.innerHTML = `
+    <div class="select-backdrop" onclick="this.parentElement.remove()"></div>
+    <div class="select-content">
+      <h4>🎨 팔레트 선택 (${paletteNumber === 1 ? '왼쪽' : '오른쪽'})</h4>
+      <div class="palette-filter-bar">
+        <input type="text" id="paletteSearchInput" placeholder="팔레트 검색..."
+               onkeyup="filterPalettes(this.value, ${paletteNumber})">
+        <select id="paletteSortSelect" onchange="sortPalettes(this.value, ${paletteNumber})">
+          <option value="recent">최신순</option>
+          <option value="name">이름순</option>
+          <option value="colors">색상 수</option>
+        </select>
+      </div>
+      <div class="saved-palettes-grid" id="paletteGrid${paletteNumber}">
+        ${renderPaletteGrid(saved, paletteNumber)}
+      </div>
+      <div class="palette-select-actions">
+        <button class="btn-cancel" onclick="this.parentElement.parentElement.parentElement.remove()">
+          취소
+        </button>
+        <button class="btn-primary" onclick="selectCurrentPalette(${paletteNumber})">
+          현재 팔레트 사용
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(selectModal);
+}
+
+//NOTE - 팔레트 그리드 렌더링
+function renderPaletteGrid(palettes, paletteNumber) {
+  if (palettes.length === 0) {
+    return '<div class="no-palettes">검색 결과가 없습니다.</div>';
+  }
+
+  return palettes.map((item, index) => `
+    <div class="saved-palette-item" onclick="choosePalette(${paletteNumber}, ${index})"
+         data-name="${item.name || ''}" data-index="${index}">
+      <div class="palette-preview">
+        ${item.colors.map(color => `
+          <div class="preview-color" style="background: ${color};"
+               title="${color}"></div>
+        `).join('')}
+      </div>
+      <div class="palette-info">
+        <div class="palette-name">${item.name || '이름 없음'}</div>
+        <div class="palette-meta">
+          <span class="palette-date">${new Date(item.timestamp).toLocaleDateString('ko-KR')}</span>
+          <span class="palette-color-count">${item.colors.length} 색상</span>
+        </div>
+      </div>
+      ${item.tags ? `
+        <div class="palette-tags">
+          ${item.tags.slice(0, 3).map(tag => `
+            <span class="palette-tag">${tag}</span>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+//NOTE - 팔레트 필터링
+function filterPalettes(query, paletteNumber) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+  const filtered = saved.filter(item => {
+    const name = (item.name || '').toLowerCase();
+    const tags = (item.tags || []).join(' ').toLowerCase();
+    return name.includes(query.toLowerCase()) || tags.includes(query.toLowerCase());
+  });
+
+  const grid = document.getElementById(`paletteGrid${paletteNumber}`);
+  if (grid) {
+    grid.innerHTML = renderPaletteGrid(filtered, paletteNumber);
+  }
+}
+
+//NOTE - 팔레트 정렬
+function sortPalettes(sortBy, paletteNumber) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+
+  const sorted = [...saved].sort((a, b) => {
+    switch(sortBy) {
+      case 'name':
+        return (a.name || '').localeCompare(b.name || '');
+      case 'colors':
+        return b.colors.length - a.colors.length;
+      case 'recent':
+      default:
+        return b.timestamp - a.timestamp;
+    }
+  });
+
+  const grid = document.getElementById(`paletteGrid${paletteNumber}`);
+  if (grid) {
+    grid.innerHTML = renderPaletteGrid(sorted, paletteNumber);
+  }
+}
+
+//NOTE - 현재 팔레트 선택
+function selectCurrentPalette(paletteNumber) {
+  if (paletteNumber === 1) {
+    compareMode.palette1 = [...currentPalette];
+    compareMode.palette1Name = '현재 팔레트';
+    displayComparePalette(1, compareMode.palette1);
+    document.getElementById('palette1Name').textContent = compareMode.palette1Name;
+  } else {
+    compareMode.palette2 = [...currentPalette];
+    compareMode.palette2Name = '현재 팔레트';
+    displayComparePalette(2, compareMode.palette2);
+    document.getElementById('palette2Name').textContent = compareMode.palette2Name;
+  }
+
+  // 모달 닫기
+  document.querySelector('.palette-select-modal').remove();
+
+  // 비교 실행
+  if (compareMode.palette1 && compareMode.palette2) {
+    performComparison();
+  }
+}
+
+//NOTE - 선택한 팔레트 적용
+function choosePalette(paletteNumber, index) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+  const selected = saved[index];
+
+  if (paletteNumber === 1) {
+    compareMode.palette1 = selected.colors;
+    compareMode.palette1Name = selected.name || '팔레트 1';
+    compareMode.palette1Data = selected; // 전체 데이터 저장
+    displayComparePalette(1, compareMode.palette1);
+    document.getElementById('palette1Name').textContent = compareMode.palette1Name;
+  } else {
+    compareMode.palette2 = selected.colors;
+    compareMode.palette2Name = selected.name || '팔레트 2';
+    compareMode.palette2Data = selected; // 전체 데이터 저장
+    displayComparePalette(2, compareMode.palette2);
+    document.getElementById('palette2Name').textContent = compareMode.palette2Name;
+  }
+
+  // 팔레트 선택 모달 닫기
+  const modal = document.querySelector('.palette-select-modal');
+  if (modal) {
+    modal.classList.add('closing');
+    setTimeout(() => modal.remove(), 300);
+  }
+
+  // 선택 효과
+  showToast(`팔레트 선택: ${selected.name || '이름 없음'}`);
+
+  // 두 팔레트가 모두 선택되면 비교 분석 실행
+  if (compareMode.palette1 && compareMode.palette2) {
+    performComparison();
+  }
+}
+
+//NOTE - 비교용 팔레트 표시
+function displayComparePalette(paletteNumber, colors) {
+  const containerId = `comparePalette${paletteNumber}`;
+  const container = document.getElementById(containerId);
+  
+  if (!colors || colors.length === 0) {
+    container.innerHTML = '<div class="empty-palette">팔레트를 선택해주세요</div>';
+    return;
+  }
+  
+  container.innerHTML = colors.map(color => {
+    const rgb = hexToRgb(color);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    
+    return `
+      <div class="compare-color-card">
+        <div class="color-display" style="background: ${color};"></div>
+        <div class="color-codes">
+          <div class="code-item">${color}</div>
+          <div class="code-item">RGB(${rgb.r}, ${rgb.g}, ${rgb.b})</div>
+          <div class="code-item">HSL(${hsl.h}°, ${hsl.s}%, ${hsl.l}%)</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // 팔레트 분석 요약
+  const analysisContainer = document.getElementById(`palette${paletteNumber}Analysis`);
+  const analysis = analyzePaletteCompact(colors);
+  analysisContainer.innerHTML = `
+    <div class="analysis-compact">
+      <div class="metric-item">
+        <span class="metric-label">종합 점수:</span>
+        <span class="metric-value">${analysis.totalScore}점 (${analysis.grade})</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">대비:</span>
+        <span class="metric-value">${analysis.contrast}점</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">조화:</span>
+        <span class="metric-value">${analysis.harmony}점</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">접근성:</span>
+        <span class="metric-value">${analysis.accessibility}점</span>
+      </div>
+    </div>
+  `;
+}
+
+//NOTE - 상세한 팔레트 분석 (비교용)
+function analyzePaletteDetailed(colors) {
+  const scores = analyzePalette(colors);
+  const gradeInfo = getScoreGrade(scores.total);
+
+  // 추가 분석: 색상 다양성
+  const uniqueHues = new Set();
+  const saturationValues = [];
+  const lightnessValues = [];
+
+  colors.forEach(color => {
+    const rgb = hexToRgb(color);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    uniqueHues.add(Math.floor(hsl.h / 30)); // 30도 단위로 그룹화
+    saturationValues.push(hsl.s);
+    lightnessValues.push(hsl.l);
+  });
+
+  const diversity = Math.round((uniqueHues.size / 12) * 100); // 색상환 다양성
+  const avgSaturation = Math.round(saturationValues.reduce((a, b) => a + b, 0) / saturationValues.length);
+  const avgLightness = Math.round(lightnessValues.reduce((a, b) => a + b, 0) / lightnessValues.length);
+
+  // 온도 균형 분석
+  const warmColors = colors.filter(color => {
+    const rgb = hexToRgb(color);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    return (hsl.h >= 0 && hsl.h <= 60) || (hsl.h >= 300 && hsl.h <= 360);
+  }).length;
+
+  const coolColors = colors.length - warmColors;
+  const temperatureBalance = Math.round((warmColors / colors.length) * 100);
+
+  return {
+    totalScore: scores.total,  // total을 totalScore로 매핑
+    grade: gradeInfo.grade,    // gradeInfo에서 grade 가져오기
+    contrast: scores.contrast,
+    harmony: scores.harmony,
+    accessibility: scores.accessibility,
+    diversity,
+    avgSaturation,
+    avgLightness,
+    temperatureBalance,
+    warmColors,
+    coolColors
+  };
+}
+
+//NOTE - 간단한 팔레트 분석 (비교용)
+function analyzePaletteCompact(colors) {
+  return analyzePaletteDetailed(colors);
+}
+
+//NOTE - 두 팔레트 비교 분석
+function performComparison() {
+  const analysis1 = analyzePaletteDetailed(compareMode.palette1);
+  const analysis2 = analyzePaletteDetailed(compareMode.palette2);
+
+  const detailsContainer = document.getElementById('comparisonDetails');
+
+  // 점수 차이 계산
+  const scoreDiff = analysis1.totalScore - analysis2.totalScore;
+  const winner = scoreDiff > 0 ? compareMode.palette1Name :
+                 scoreDiff < 0 ? compareMode.palette2Name : '동점';
+
+  // 상세 비교 메트릭
+  const metrics = {
+    contrast: {
+      diff: analysis1.contrast - analysis2.contrast,
+      winner: analysis1.contrast > analysis2.contrast ? 1 : 2
+    },
+    harmony: {
+      diff: analysis1.harmony - analysis2.harmony,
+      winner: analysis1.harmony > analysis2.harmony ? 1 : 2
+    },
+    accessibility: {
+      diff: analysis1.accessibility - analysis2.accessibility,
+      winner: analysis1.accessibility > analysis2.accessibility ? 1 : 2
+    },
+    diversity: {
+      diff: analysis1.diversity - analysis2.diversity,
+      winner: analysis1.diversity > analysis2.diversity ? 1 : 2
+    },
+    temperature: {
+      balance1: analysis1.temperatureBalance,
+      balance2: analysis2.temperatureBalance
+    }
+  };
+
+  detailsContainer.innerHTML = `
+    <div class="comparison-summary">
+      <div class="winner-badge">
+        ${scoreDiff === 0 ? '🤝' : scoreDiff > 0 ? '🏆' : '🏆'}
+        <strong>${winner}</strong>
+        ${scoreDiff !== 0 ? '우승!' : '비김'}
+      </div>
+      <div class="score-difference">
+        점수 차이: <strong>${Math.abs(scoreDiff)}점</strong>
+      </div>
+      <div class="quick-stats">
+        <span class="stat-item">
+          <span class="stat-icon">🎨</span> ${compareMode.palette1.length} vs ${compareMode.palette2.length} 색상
+        </span>
+      </div>
+    </div>
+    
+    <div class="comparison-metrics-detail">
+      <h5>📊 상세 비교 분석</h5>
+
+      <div class="metric-comparison">
+        <div class="metric-row ${metrics.contrast.diff !== 0 ? 'has-winner' : ''}">
+          <span class="metric-name">종합 점수</span>
+          <div class="metric-bars">
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis1.totalScore}%; background: linear-gradient(135deg, #4CAF50, #45a049);">
+                ${analysis1.totalScore}
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis2.totalScore}%; background: linear-gradient(135deg, #2196F3, #1976D2);">
+                ${analysis2.totalScore}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-row ${metrics.contrast.diff !== 0 ? 'has-winner' : ''}">
+          <span class="metric-name">
+            대비 ${Math.abs(metrics.contrast.diff) >= 10 ? metrics.contrast.winner === 1 ? '✅' : '❌' : ''}
+          </span>
+          <div class="metric-bars">
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis1.contrast}%; background: linear-gradient(135deg, #4CAF50, #45a049);">
+                ${analysis1.contrast}
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis2.contrast}%; background: linear-gradient(135deg, #2196F3, #1976D2);">
+                ${analysis2.contrast}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-row ${metrics.harmony.diff !== 0 ? 'has-winner' : ''}">
+          <span class="metric-name">
+            조화 ${Math.abs(metrics.harmony.diff) >= 10 ? metrics.harmony.winner === 1 ? '✅' : '❌' : ''}
+          </span>
+          <div class="metric-bars">
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis1.harmony}%; background: linear-gradient(135deg, #4CAF50, #45a049);">
+                ${analysis1.harmony}
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis2.harmony}%; background: linear-gradient(135deg, #2196F3, #1976D2);">
+                ${analysis2.harmony}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metric-row ${metrics.accessibility.diff !== 0 ? 'has-winner' : ''}">
+          <span class="metric-name">
+            접근성 ${Math.abs(metrics.accessibility.diff) >= 10 ? metrics.accessibility.winner === 1 ? '✅' : '❌' : ''}
+          </span>
+          <div class="metric-bars">
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis1.accessibility}%; background: linear-gradient(135deg, #4CAF50, #45a049);">
+                ${analysis1.accessibility}
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis2.accessibility}%; background: linear-gradient(135deg, #2196F3, #1976D2);">
+                ${analysis2.accessibility}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-row ${metrics.diversity.diff !== 0 ? 'has-winner' : ''}">
+          <span class="metric-name">
+            다양성 ${Math.abs(metrics.diversity.diff) >= 10 ? metrics.diversity.winner === 1 ? '✅' : '❌' : ''}
+          </span>
+          <div class="metric-bars">
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis1.diversity}%; background: linear-gradient(135deg, #9C27B0, #7B1FA2);">
+                ${analysis1.diversity}
+              </div>
+            </div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${analysis2.diversity}%; background: linear-gradient(135deg, #FF9800, #F57C00);">
+                ${analysis2.diversity}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="additional-metrics">
+        <h5>🌡️ 색온 분석</h5>
+        <div class="temperature-comparison">
+          <div class="temp-palette">
+            <div class="temp-label">${compareMode.palette1Name}</div>
+            <div class="temp-bar">
+              <div class="warm-section" style="width: ${analysis1.temperatureBalance}%" title="따뜻한 색: ${analysis1.warmColors}개">
+                <span>🔥 ${analysis1.temperatureBalance}%</span>
+              </div>
+              <div class="cool-section" style="width: ${100 - analysis1.temperatureBalance}%" title="차가운 색: ${analysis1.coolColors}개">
+                <span>❄️ ${100 - analysis1.temperatureBalance}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="temp-palette">
+            <div class="temp-label">${compareMode.palette2Name}</div>
+            <div class="temp-bar">
+              <div class="warm-section" style="width: ${analysis2.temperatureBalance}%" title="따뜻한 색: ${analysis2.warmColors}개">
+                <span>🔥 ${analysis2.temperatureBalance}%</span>
+              </div>
+              <div class="cool-section" style="width: ${100 - analysis2.temperatureBalance}%" title="차가운 색: ${analysis2.coolColors}개">
+                <span>❄️ ${100 - analysis2.temperatureBalance}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h5>🌈 색상 특성</h5>
+        <div class="color-characteristics">
+          <div class="char-item">
+            <span class="char-label">평균 채도:</span>
+            <div class="char-values">
+              <span class="char-value ${analysis1.avgSaturation > analysis2.avgSaturation ? 'higher' : ''}">
+                ${compareMode.palette1Name}: ${analysis1.avgSaturation}%
+              </span>
+              <span class="char-value ${analysis2.avgSaturation > analysis1.avgSaturation ? 'higher' : ''}">
+                ${compareMode.palette2Name}: ${analysis2.avgSaturation}%
+              </span>
+            </div>
+          </div>
+          <div class="char-item">
+            <span class="char-label">평균 명도:</span>
+            <div class="char-values">
+              <span class="char-value ${analysis1.avgLightness > analysis2.avgLightness ? 'higher' : ''}">
+                ${compareMode.palette1Name}: ${analysis1.avgLightness}%
+              </span>
+              <span class="char-value ${analysis2.avgLightness > analysis1.avgLightness ? 'higher' : ''}">
+                ${compareMode.palette2Name}: ${analysis2.avgLightness}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="comparison-legend">
+        <span style="color: #4CAF50;">■</span> ${compareMode.palette1Name}
+        <span style="color: #2196F3;">■</span> ${compareMode.palette2Name}
+      </div>
+      
+      <div class="comparison-insights">
+        <h5>💡 인사이트</h5>
+        ${generateComparisonInsights(analysis1, analysis2)}
+      </div>
+    </div>
+  `;
+}
+
+//NOTE - 비교 인사이트 생성
+function generateComparisonInsights(analysis1, analysis2) {
+  const insights = [];
+
+  // 종합 평가
+  const scoreDiff = analysis1.totalScore - analysis2.totalScore;
+  if (Math.abs(scoreDiff) >= 20) {
+    insights.push(`
+      <div class="insight-item insight-major">
+        <strong>${scoreDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>이(가)
+        전반적으로 <strong>훨씬 우수한</strong> 팔레트입니다.
+      </div>
+    `);
+  }
+
+  // 대비 비교
+  const contrastDiff = analysis1.contrast - analysis2.contrast;
+  if (Math.abs(contrastDiff) >= 15) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${contrastDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가
+        색상 대비가 <strong>${Math.abs(contrastDiff)}점</strong> 더 높아
+        가독성이 우수합니다.
+      </div>
+    `);
+  }
+  
+  // 조화 비교
+  const harmonyDiff = analysis1.harmony - analysis2.harmony;
+  if (Math.abs(harmonyDiff) >= 15) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${harmonyDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가 
+        색상 조화가 <strong>${Math.abs(harmonyDiff)}점</strong> 더 높아 
+        시각적으로 더 안정적입니다.
+      </div>
+    `);
+  }
+  
+  // 접근성 비교
+  const accessDiff = analysis1.accessibility - analysis2.accessibility;
+  if (Math.abs(accessDiff) >= 15) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${accessDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가 
+        접근성 점수가 <strong>${Math.abs(accessDiff)}점</strong> 더 높아 
+        WCAG 기준을 더 잘 충족합니다.
+      </div>
+    `);
+  }
+  
+  // 다양성 비교
+  const diversityDiff = analysis1.diversity - analysis2.diversity;
+  if (Math.abs(diversityDiff) >= 20) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${diversityDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가
+        색상 다양성이 <strong>${Math.abs(diversityDiff)}점</strong> 더 높아
+        더 풍부한 색감을 제공합니다.
+      </div>
+    `);
+  }
+
+  // 온도 균형 비교
+  const tempDiff = Math.abs(50 - analysis1.temperatureBalance) - Math.abs(50 - analysis2.temperatureBalance);
+  if (Math.abs(tempDiff) >= 20) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${tempDiff < 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가
+        따뜻한 색과 차가운 색의 균형이 더 잘 잡혀 있습니다.
+      </div>
+    `);
+  }
+
+  // 채도 비교
+  const satDiff = analysis1.avgSaturation - analysis2.avgSaturation;
+  if (Math.abs(satDiff) >= 20) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${satDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가
+        더 선명하고 강렬한 색상을 포함합니다.
+      </div>
+    `);
+  }
+
+  // 명도 비교
+  const lightDiff = analysis1.avgLightness - analysis2.avgLightness;
+  if (Math.abs(lightDiff) >= 20) {
+    insights.push(`
+      <div class="insight-item">
+        <strong>${lightDiff > 0 ? compareMode.palette1Name : compareMode.palette2Name}</strong>가
+        전반적으로 더 밝은 톤을 가지고 있습니다.
+      </div>
+    `);
+  }
+
+  // 등급 비교
+  if (analysis1.grade !== analysis2.grade) {
+    const gradeEmoji = {
+      'S': '🏆',
+      'A': '🥇',
+      'B': '🥈',
+      'C': '🥉',
+      'D': '😐'
+    };
+
+    insights.push(`
+      <div class="insight-item insight-grade">
+        <div class="grade-comparison">
+          <span class="grade-item">
+            ${gradeEmoji[analysis1.grade] || ''} <strong>${compareMode.palette1Name}</strong>: ${analysis1.grade}등급
+          </span>
+          <span class="grade-item">
+            ${gradeEmoji[analysis2.grade] || ''} <strong>${compareMode.palette2Name}</strong>: ${analysis2.grade}등급
+          </span>
+        </div>
+      </div>
+    `);
+  }
+
+  if (insights.length === 0) {
+    return '<div class="insight-item">두 팔레트가 전반적으로 비슷한 수준입니다.</div>';
+  }
+
+  // 추천 사항 추가
+  const recommendation = getRecommendation(analysis1, analysis2);
+  if (recommendation) {
+    insights.push(recommendation);
+  }
+
+  return insights.join('');
+}
+
+//NOTE - 추천 사항 생성
+function getRecommendation(analysis1, analysis2) {
+  const score1 = analysis1.totalScore;
+  const score2 = analysis2.totalScore;
+
+  if (score1 > 80 && score2 > 80) {
+    return `
+      <div class="insight-item insight-recommendation">
+        <strong>🌟 추천:</strong> 두 팔레트 모두 뛰어난 품질입니다.
+        프로젝트의 특성에 따라 선택하세요.
+      </div>
+    `;
+  } else if (score1 > 70 || score2 > 70) {
+    const better = score1 > score2 ? compareMode.palette1Name : compareMode.palette2Name;
+    return `
+      <div class="insight-item insight-recommendation">
+        <strong>💡 추천:</strong> <strong>${better}</strong>을(를) 사용하되,
+        필요에 따라 미세 조정을 고려해보세요.
+      </div>
+    `;
+  } else {
+    return `
+      <div class="insight-item insight-recommendation">
+        <strong>⚠️ 제안:</strong> 두 팔레트 모두 개선이 필요할 수 있습니다.
+        대비와 접근성을 높이는 방향으로 수정해보세요.
+      </div>
+    `;
+  }
+}
+
+//!SECTION - 실시간 비교 기능
+
+//NOTE - 실시간 비교 토글
+function toggleLiveCompare() {
+  if (compareMode.liveCompareActive) {
+    closeLiveCompare();
+  } else {
+    openLiveCompare();
+  }
+}
+
+//NOTE - 실시간 비교 모드 시작
+function openLiveCompare() {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+
+  if (saved.length === 0) {
+    showToast('저장된 팔레트가 없습니다! 먼저 팔레트를 저장해주세요.');
+    return;
+  }
+
+  // 팔레트 선택 모달 생성
+  const modal = document.createElement('div');
+  modal.className = 'palette-select-modal';
+  modal.innerHTML = `
+    <div class="select-backdrop" onclick="this.parentElement.remove()"></div>
+    <div class="select-content">
+      <h4>⚡ 실시간 비교할 팔레트 선택</h4>
+      <p style="color: #8892b0; margin-bottom: 20px; text-align: center;">
+        선택한 팔레트와 현재 생성되는 팔레트를 실시간으로 비교합니다.
+      </p>
+      <div class="saved-palettes-grid">
+        ${saved.map((item, index) => `
+          <div class="saved-palette-item" onclick="selectLivePalette(${index})">
+            <div class="palette-preview">
+              ${item.colors.map(color => `
+                <div class="preview-color" style="background: ${color};" title="${color}"></div>
+              `).join('')}
+            </div>
+            <div class="palette-info">
+              <div class="palette-name">${item.name || '이름 없음'}</div>
+              <div class="palette-meta">
+                <span class="palette-date">${new Date(item.timestamp).toLocaleDateString('ko-KR')}</span>
+                <span class="palette-color-count">${item.colors.length} 색상</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-secondary" onclick="this.parentElement.parentElement.remove()" style="width: 100%; margin-top: 20px;">
+        취소
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+//NOTE - 실시간 비교용 팔레트 선택
+function selectLivePalette(index) {
+  const saved = JSON.parse(localStorage.getItem('savedPalettes') || '[]');
+  const selected = saved[index];
+
+  compareMode.savedPaletteForLive = selected.colors;
+  compareMode.savedPaletteName = selected.name || '저장된 팔레트';
+  compareMode.liveCompareActive = true;
+
+  // 모달 닫기
+  const modal = document.querySelector('.palette-select-modal');
+  if (modal) {
+    modal.remove();
+  }
+
+  // 버튼 스타일 업데이트
+  const btn = document.getElementById('liveCompareBtn');
+  if (btn) {
+    btn.classList.add('active');
+    btn.innerHTML = '<span>⚡ 실시간 비교 중</span>';
+  }
+
+  // 실시간 비교 패널 생성
+  createLiveComparePanel();
+
+  showToast(`실시간 비교 시작: ${compareMode.savedPaletteName}`);
+
+  // 현재 팔레트로 즉시 비교 실행
+  updateLiveComparison();
+}
+
+//NOTE - 실시간 비교 패널 생성
+function createLiveComparePanel() {
+  // 기존 패널 제거
+  const existing = document.getElementById('liveComparePanel');
+  if (existing) {
+    existing.remove();
+  }
+
+  const panel = document.createElement('div');
+  panel.id = 'liveComparePanel';
+  panel.className = 'live-compare-panel';
+  panel.innerHTML = `
+    <div class="live-compare-header">
+      <h4>⚡ 실시간 비교</h4>
+      <button class="close-btn" onclick="closeLiveCompare()">✕</button>
+    </div>
+    <div class="live-compare-content">
+      <div class="live-palette-info">
+        <div class="palette-label">비교 기준: <strong>${compareMode.savedPaletteName}</strong></div>
+      </div>
+      <div id="liveComparisonResult" class="live-comparison-result">
+        <div class="loading">비교 중...</div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+
+  // 애니메이션
+  setTimeout(() => panel.classList.add('show'), 10);
+}
+
+//NOTE - 실시간 비교 업데이트
+function updateLiveComparison() {
+  if (!compareMode.liveCompareActive) return;
+
+  const resultDiv = document.getElementById('liveComparisonResult');
+  if (!resultDiv) return;
+
+  const savedAnalysis = analyzePaletteDetailed(compareMode.savedPaletteForLive);
+  const currentAnalysis = analyzePaletteDetailed(currentPalette);
+
+  const scoreDiff = currentAnalysis.totalScore - savedAnalysis.totalScore;
+  const winner = scoreDiff > 0 ? '현재 팔레트' : scoreDiff < 0 ? compareMode.savedPaletteName : '동점';
+
+  resultDiv.innerHTML = `
+    <div class="live-score-summary">
+      <div class="live-score-item">
+        <span class="score-label">현재 팔레트</span>
+        <span class="score-value ${scoreDiff > 0 ? 'winning' : ''}">${currentAnalysis.totalScore}점</span>
+        <span class="score-grade">(${currentAnalysis.grade})</span>
+      </div>
+      <div class="score-vs">VS</div>
+      <div class="live-score-item">
+        <span class="score-label">${compareMode.savedPaletteName}</span>
+        <span class="score-value ${scoreDiff < 0 ? 'winning' : ''}">${savedAnalysis.totalScore}점</span>
+        <span class="score-grade">(${savedAnalysis.grade})</span>
+      </div>
+    </div>
+
+    <div class="live-metrics">
+      <div class="metric-bar-mini">
+        <span class="metric-name-mini">대비</span>
+        <div class="bars-mini">
+          <div class="bar-mini current" style="width: ${currentAnalysis.contrast}%"></div>
+          <div class="bar-mini saved" style="width: ${savedAnalysis.contrast}%"></div>
+        </div>
+      </div>
+      <div class="metric-bar-mini">
+        <span class="metric-name-mini">조화</span>
+        <div class="bars-mini">
+          <div class="bar-mini current" style="width: ${currentAnalysis.harmony}%"></div>
+          <div class="bar-mini saved" style="width: ${savedAnalysis.harmony}%"></div>
+        </div>
+      </div>
+      <div class="metric-bar-mini">
+        <span class="metric-name-mini">접근성</span>
+        <div class="bars-mini">
+          <div class="bar-mini current" style="width: ${currentAnalysis.accessibility}%"></div>
+          <div class="bar-mini saved" style="width: ${savedAnalysis.accessibility}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="live-winner">
+      ${scoreDiff !== 0 ? `
+        <span class="winner-text">
+          ${scoreDiff > 0 ? '✨' : '📌'} <strong>${winner}</strong>가 ${Math.abs(scoreDiff)}점 우세
+        </span>
+      ` : '<span class="winner-text">🤝 동점</span>'}
+    </div>
+  `;
+}
+
+//NOTE - 실시간 비교 종료
+function closeLiveCompare() {
+  compareMode.liveCompareActive = false;
+  compareMode.savedPaletteForLive = null;
+  compareMode.savedPaletteName = '';
+
+  // 패널 제거
+  const panel = document.getElementById('liveComparePanel');
+  if (panel) {
+    panel.classList.remove('show');
+    setTimeout(() => panel.remove(), 300);
+  }
+
+  // 버튼 스타일 복원
+  const btn = document.getElementById('liveCompareBtn');
+  if (btn) {
+    btn.classList.remove('active');
+    btn.innerHTML = '<span>⚡ 실시간 비교</span>';
+  }
+
+  showToast('실시간 비교 종료');
+}
+
+//!SECTION - 색상 미세 조정 슬라이더 기능
+
+//NOTE - 미세 조정 모드 전역 변수
+const fineTuneMode = {
+  isActive: false,
+  currentColorIndex: null,
+  originalColor: null
+};
+
+//NOTE - 색상 카드 클릭 시 미세 조정 패널 열기 (더블 클릭으로 변경)
+function initFineTuneListeners() {
+  // 페이지 로드 시 한 번만 호출
+  document.addEventListener('dblclick', function(e) {
+    const colorCard = e.target.closest('.color-card');
+    if (colorCard && !e.target.closest('.lock-btn')) {
+      const index = parseInt(colorCard.dataset.index);
+      openFineTunePanel(index);
+    }
+  });
+}
+
+//NOTE - 미세 조정 패널 열기
+function openFineTunePanel(colorIndex) {
+  // 유효성 검사
+  if (colorIndex === null || colorIndex === undefined || colorIndex < 0 || colorIndex >= currentPalette.length) {
+    console.error('유효하지 않은 색상 인덱스:', colorIndex);
+    return;
+  }
+
+  if (!currentPalette[colorIndex]) {
+    console.error('색상이 존재하지 않습니다:', colorIndex);
+    return;
+  }
+
+  fineTuneMode.isActive = true;
+  fineTuneMode.currentColorIndex = colorIndex;
+  fineTuneMode.originalColor = currentPalette[colorIndex];
+
+  // 기존 패널 제거
+  const existingPanel = document.getElementById('fineTunePanel');
+  if (existingPanel) {
+    existingPanel.remove();
+  }
+
+  createFineTunePanel();
+}
+
+//NOTE - 미세 조정 패널 생성
+function createFineTunePanel() {
+  const color = currentPalette[fineTuneMode.currentColorIndex];
+
+  // 색상 유효성 검사
+  if (!color) {
+    console.error('유효하지 않은 색상 인덱스:', fineTuneMode.currentColorIndex);
+    return;
+  }
+
+  const rgb = hexToRgb(color);
+  if (!rgb) {
+    console.error('유효하지 않은 HEX 색상:', color);
+    return;
+  }
+
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  const panel = document.createElement('div');
+  panel.id = 'fineTunePanel';
+  panel.className = 'fine-tune-panel';
+
+  panel.innerHTML = `
+    <div class="panel-backdrop" onclick="closeFineTunePanel()"></div>
+    <div class="panel-content">
+      <div class="panel-header">
+        <h3>🎨 색상 미세 조정</h3>
+        <button class="panel-close" onclick="closeFineTunePanel()">✕</button>
+      </div>
+
+      <div class="color-preview-section">
+        <div class="preview-large" id="fineTunePreview" style="background: ${color};"></div>
+        <div class="color-info">
+          <div class="info-row">
+            <span class="info-label">HEX:</span>
+            <span class="info-value" id="fineTuneHex">${color}</span>
+            <button class="copy-small" onclick="copyToClipboard('${color}')">📋</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">RGB:</span>
+            <span class="info-value" id="fineTuneRgb">RGB(${rgb.r}, ${rgb.g}, ${rgb.b})</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">HSL:</span>
+            <span class="info-value" id="fineTuneHsl">HSL(${hsl.h}°, ${hsl.s}%, ${hsl.l}%)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sliders-section">
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>색조 (Hue)</span>
+            <span class="slider-value" id="hueValue">${hsl.h}°</span>
+          </div>
+          <input
+            type="range"
+            id="hueSlider"
+            class="color-slider hue-slider"
+            min="0"
+            max="360"
+            value="${hsl.h}"
+            oninput="updateColorFromSliders()"
+          >
+          <div class="slider-gradient hue-gradient"></div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>채도 (Saturation)</span>
+            <span class="slider-value" id="satValue">${hsl.s}%</span>
+          </div>
+          <input
+            type="range"
+            id="satSlider"
+            class="color-slider"
+            min="0"
+            max="100"
+            value="${hsl.s}"
+            oninput="updateColorFromSliders()"
+          >
+          <div class="slider-gradient" id="satGradient"></div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>명도 (Lightness)</span>
+            <span class="slider-value" id="lightValue">${hsl.l}%</span>
+          </div>
+          <input
+            type="range"
+            id="lightSlider"
+            class="color-slider"
+            min="0"
+            max="100"
+            value="${hsl.l}"
+            oninput="updateColorFromSliders()"
+          >
+          <div class="slider-gradient" id="lightGradient"></div>
+        </div>
+      </div>
+
+      <div class="quick-adjust-section">
+        <h4>빠른 조정</h4>
+        <div class="quick-btns">
+          <button class="quick-btn" onclick="quickAdjust('lighten')">
+            ☀ 밝게
+          </button>
+          <button class="quick-btn" onclick="quickAdjust('darken')">
+            🌙 어둡게
+          </button>
+          <button class="quick-btn" onclick="quickAdjust('saturate')">
+            🎨 채도 증가
+          </button>
+          <button class="quick-btn" onclick="quickAdjust('desaturate')">
+            ⚪ 채도 감소
+          </button>
+          <button class="quick-btn" onclick="quickAdjust('complement')">
+            🔄 보색
+          </button>
+          <button class="quick-btn" onclick="quickAdjust('reset')">
+            ↺ 원래대로
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <button class="btn-apply" onclick="applyFineTune()">
+          ✅ 적용
+        </button>
+        <button class="btn-cancel" onclick="cancelFineTune()">
+          ❌ 취소
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+
+  // 그라디언트 업데이트
+  updateSliderGradients();
+
+  // 애니메이션
+  setTimeout(() => panel.classList.add('show'), 10);
+}
+
+//NOTE - 슬라이더 값 변경 시 색상 업데이트
+function updateColorFromSliders() {
+  try {
+    const hueSlider = document.getElementById('hueSlider');
+    const satSlider = document.getElementById('satSlider');
+    const lightSlider = document.getElementById('lightSlider');
+
+    if (!hueSlider || !satSlider || !lightSlider) {
+      console.error('슬라이더 요소를 찾을 수 없습니다');
+      return;
+    }
+
+    const h = Math.max(0, Math.min(360, Number.parseInt(hueSlider.value, 10) || 0));
+    const s = Math.max(0, Math.min(100, Number.parseInt(satSlider.value, 10) || 0));
+    const l = Math.max(0, Math.min(100, Number.parseInt(lightSlider.value, 10) || 0));
+
+    // HSL을 HEX로 변환
+    const newColor = hslToHex(h, s, l);
+
+    // 미리보기 업데이트
+    const previewEl = document.getElementById('fineTunePreview');
+    if (previewEl) previewEl.style.background = newColor;
+
+    // 값 표시 업데이트
+    const hueValueEl = document.getElementById('hueValue');
+    const satValueEl = document.getElementById('satValue');
+    const lightValueEl = document.getElementById('lightValue');
+
+    if (hueValueEl) hueValueEl.textContent = h + '°';
+    if (satValueEl) satValueEl.textContent = s + '%';
+    if (lightValueEl) lightValueEl.textContent = l + '%';
+
+    // 색상 정보 업데이트
+    const rgb = hexToRgb(newColor);
+    if (rgb) {
+      const hexEl = document.getElementById('fineTuneHex');
+      const rgbEl = document.getElementById('fineTuneRgb');
+      const hslEl = document.getElementById('fineTuneHsl');
+
+      if (hexEl) hexEl.textContent = newColor;
+      if (rgbEl) rgbEl.textContent = `RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+      if (hslEl) hslEl.textContent = `HSL(${h}°, ${s}%, ${l}%)`;
+    }
+
+    // 복사 버튼 업데이트
+    const copyBtn = document.querySelector('.copy-small');
+    if (copyBtn) {
+      copyBtn.setAttribute('data-color', newColor);
+      copyBtn.setAttribute('onclick', `copyToClipboard('${newColor}')`);
+    }
+
+    // 그라디언트 업데이트
+    updateSliderGradients();
+  } catch (error) {
+    console.error('색상 업데이트 중 오류:', error);
+  }
+}
+
+//NOTE - 슬라이더 그라디언트 업데이트
+function updateSliderGradients() {
+  try {
+    const hueSlider = document.getElementById('hueSlider');
+    const satSlider = document.getElementById('satSlider');
+    const lightSlider = document.getElementById('lightSlider');
+
+    if (!hueSlider || !satSlider || !lightSlider) {
+      return;
+    }
+
+    const h = Number.parseInt(hueSlider.value, 10) || 0;
+    const s = Number.parseInt(satSlider.value, 10) || 0;
+    const l = Number.parseInt(lightSlider.value, 10) || 0;
+
+    // 채도 그라디언트
+    const satGradient = document.getElementById('satGradient');
+    if (satGradient) {
+      satGradient.style.background = `linear-gradient(to right,
+        hsl(${h}, 0%, ${l}%),
+        hsl(${h}, 100%, ${l}%)
+      )`;
+    }
+
+    // 명도 그라디언트
+    const lightGradient = document.getElementById('lightGradient');
+    if (lightGradient) {
+      lightGradient.style.background = `linear-gradient(to right,
+        hsl(${h}, ${s}%, 0%),
+        hsl(${h}, ${s}%, 50%),
+        hsl(${h}, ${s}%, 100%)
+      )`;
+    }
+  } catch (error) {
+    console.error('그라디언트 업데이트 중 오류:', error);
+  }
+}
+
+//NOTE - 빠른 조정 기능
+function quickAdjust(type) {
+  const hueSlider = document.getElementById('hueSlider');
+  const satSlider = document.getElementById('satSlider');
+  const lightSlider = document.getElementById('lightSlider');
+
+  let h = Number.parseInt(hueSlider.value);
+  let s = Number.parseInt(satSlider.value);
+  let l = Number.parseInt(lightSlider.value);
+
+  switch (type) {
+    case 'lighten':
+      l = Math.min(100, l + 10);
+      lightSlider.value = l;
+      break;
+    
+    case 'darken':
+      l = Math.max(0, l - 10);
+      lightSlider.value = l;
+      break;
+    
+    case 'saturate':
+      s = Math.min(100, s + 15);
+      satSlider.value = s;
+      break;
+    
+    case 'desaturate':
+      s = Math.max(0, s - 15);
+      satSlider.value = s;
+      break;
+    
+    case 'complement':
+      h = (h + 180) % 360;
+      hueSlider.value = h;
+      break;
+    
+    case 'reset':
+      const rgb = hexToRgb(fineTuneMode.originalColor);
+      if (rgb) {
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        hueSlider.value = hsl.h;
+        satSlider.value = hsl.s;
+        lightSlider.value = hsl.l;
+      } else {
+        console.error('유효하지 않은 원본 색상:', fineTuneMode.originalColor);
+      }
+      break;
+  }
+
+  updateColorFromSliders();
+}
+
+//NOTE - 미세 조정 적용
+function applyFineTune() {
+  const h = Number.parseInt(document.getElementById('hueSlider').value);
+  const s = Number.parseInt(document.getElementById('satSlider').value);
+  const l = Number.parseInt(document.getElementById('lightSlider').value);
+
+  const newColor = hslToHex(h, s, l);
+  currentPalette[fineTuneMode.currentColorIndex] = newColor;
+
+  // 히스토리에 추가
+  addToHistory(currentPalette);
+
+  // 팔레트 표시 업데이트
+  displayPalette();
+
+  closeFineTunePanel();
+  showToast('색상이 조정되었습니다! 🎨');
+}
+
+//NOTE - 미세 조정 취소
+function cancelFineTune() {
+  closeFineTunePanel();
+}
+
+//NOTE - 미세 조정 패널 닫기
+function closeFineTunePanel() {
+  const panel = document.getElementById('fineTunePanel');
+  if (panel) {
+    panel.classList.remove('show');
+    setTimeout(() => panel.remove(), 300);
+  }
+
+  fineTuneMode.isActive = false;
+  fineTuneMode.currentColorIndex = null;
+  fineTuneMode.originalColor = null;
+}
+
+//NOTE - HSL을 HEX로 변환
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+
+  let r = 0, g = 0, b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (h >= 60 && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (h >= 120 && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (h >= 180 && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c; g = 0; b = x;
+  }
+
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+
+  return rgbToHex({r, g, b});
+}
+
+//!SECTION - 색상 이름 표시 기능
+
+//NOTE - 색상 이름 데이터베이스
+const colorNames = {
+  ko: [
+    // 빨강 계열 (10개)
+    { hue: [355, 360], sat: [80, 100], light: [45, 65], name: "빨강" },
+    { hue: [0, 5], sat: [80, 100], light: [45, 65], name: "새빨강" },
+    { hue: [0, 10], sat: [70, 100], light: [65, 80], name: "연한 빨강" },
+    { hue: [0, 10], sat: [70, 100], light: [30, 45], name: "진한 빨강" },
+    { hue: [0, 10], sat: [70, 100], light: [20, 30], name: "암적색" },
+    { hue: [350, 360], sat: [50, 70], light: [35, 55], name: "적갈색" },
+    { hue: [0, 8], sat: [50, 70], light: [40, 60], name: "벽돌색" },
+    { hue: [350, 360], sat: [70, 100], light: [25, 40], name: "버건디" },
+    { hue: [0, 10], sat: [85, 100], light: [50, 65], name: "선홍" },
+    { hue: [350, 360], sat: [60, 85], light: [45, 60], name: "와인" },
+    
+    // 주황 계열 (10개)
+    { hue: [10, 20], sat: [80, 100], light: [50, 70], name: "주황" },
+    { hue: [15, 25], sat: [90, 100], light: [55, 70], name: "밝은 주황" },
+    { hue: [20, 30], sat: [70, 90], light: [55, 70], name: "살구" },
+    { hue: [15, 25], sat: [80, 100], light: [65, 80], name: "복숭아" },
+    { hue: [25, 35], sat: [70, 90], light: [50, 65], name: "귤색" },
+    { hue: [10, 20], sat: [70, 90], light: [40, 55], name: "진한 주황" },
+    { hue: [20, 30], sat: [80, 100], light: [70, 85], name: "연한 복숭아" },
+    { hue: [15, 25], sat: [50, 70], light: [45, 60], name: "황토" },
+    { hue: [25, 35], sat: [80, 100], light: [60, 75], name: "호박" },
+    { hue: [10, 18], sat: [70, 95], light: [50, 65], name: "당근" },
+    
+    // 노랑 계열 (10개)
+    { hue: [50, 60], sat: [90, 100], light: [50, 65], name: "노랑" },
+    { hue: [45, 55], sat: [80, 100], light: [65, 80], name: "밝은 노랑" },
+    { hue: [50, 60], sat: [70, 90], light: [75, 90], name: "크림" },
+    { hue: [40, 50], sat: [80, 100], light: [45, 60], name: "황금" },
+    { hue: [45, 55], sat: [90, 100], light: [55, 70], name: "레몬" },
+    { hue: [40, 50], sat: [60, 80], light: [50, 65], name: "겨자" },
+    { hue: [50, 60], sat: [50, 70], light: [70, 85], name: "아이보리" },
+    { hue: [35, 45], sat: [70, 90], light: [45, 60], name: "금색" },
+    { hue: [50, 60], sat: [100, 100], light: [50, 60], name: "해바라기" },
+    { hue: [55, 65], sat: [80, 100], light: [70, 85], name: "바나나" },
+    
+    // 연두/라임 계열 (8개)
+    { hue: [65, 80], sat: [60, 90], light: [50, 70], name: "연두" },
+    { hue: [70, 85], sat: [70, 100], light: [55, 75], name: "라임" },
+    { hue: [75, 90], sat: [80, 100], light: [65, 80], name: "밝은 연두" },
+    { hue: [65, 80], sat: [50, 70], light: [45, 60], name: "올리브그린" },
+    { hue: [70, 85], sat: [60, 85], light: [60, 75], name: "연두" },
+    { hue: [80, 95], sat: [70, 90], light: [55, 70], name: "샤트르즈" },
+    { hue: [65, 75], sat: [40, 60], light: [40, 55], name: "카키" },
+    { hue: [75, 90], sat: [85, 100], light: [70, 85], name: "형광 연두" },
+    
+    // 초록 계열 (12개)
+    { hue: [95, 140], sat: [70, 100], light: [35, 50], name: "초록" },
+    { hue: [110, 135], sat: [80, 100], light: [30, 45], name: "진한 초록" },
+    { hue: [100, 130], sat: [60, 85], light: [50, 70], name: "연한 초록" },
+    { hue: [120, 145], sat: [50, 75], light: [25, 40], name: "깊은 초록" },
+    { hue: [110, 130], sat: [90, 100], light: [40, 55], name: "에메랄드" },
+    { hue: [95, 115], sat: [70, 90], light: [45, 60], name: "잔디" },
+    { hue: [125, 145], sat: [40, 65], light: [30, 50], name: "숲" },
+    { hue: [100, 120], sat: [85, 100], light: [50, 65], name: "밝은 초록" },
+    { hue: [130, 150], sat: [60, 85], light: [35, 50], name: "비취" },
+    { hue: [110, 130], sat: [30, 50], light: [35, 50], name: "올리브" },
+    { hue: [120, 140], sat: [70, 95], light: [40, 55], name: "청록빛 초록" },
+    { hue: [95, 110], sat: [75, 95], light: [55, 70], name: "민트그린" },
+    
+    // 청록 계열 (10개)
+    { hue: [150, 170], sat: [60, 90], light: [45, 65], name: "청록" },
+    { hue: [160, 175], sat: [70, 100], light: [50, 70], name: "터키옥" },
+    { hue: [165, 180], sat: [60, 85], light: [55, 75], name: "밝은 청록" },
+    { hue: [155, 170], sat: [50, 75], light: [40, 60], name: "물빛" },
+    { hue: [170, 185], sat: [70, 95], light: [60, 80], name: "아쿠아" },
+    { hue: [150, 165], sat: [80, 100], light: [45, 60], name: "진한 청록" },
+    { hue: [160, 175], sat: [40, 65], light: [50, 70], name: "연한 청록" },
+    { hue: [165, 180], sat: [75, 100], light: [65, 80], name: "민트" },
+    { hue: [155, 170], sat: [85, 100], light: [50, 65], name: "에메랄드그린" },
+    { hue: [170, 185], sat: [50, 75], light: [55, 70], name: "시안" },
+    
+    // 파랑 계열 (12개)
+    { hue: [185, 220], sat: [70, 100], light: [40, 60], name: "파랑" },
+    { hue: [190, 210], sat: [60, 90], light: [55, 75], name: "하늘" },
+    { hue: [200, 220], sat: [80, 100], light: [30, 45], name: "남색" },
+    { hue: [210, 230], sat: [70, 95], light: [45, 65], name: "청색" },
+    { hue: [185, 205], sat: [50, 75], light: [50, 70], name: "연한 파랑" },
+    { hue: [205, 225], sat: [85, 100], light: [35, 50], name: "진한 파랑" },
+    { hue: [195, 215], sat: [90, 100], light: [50, 65], name: "밝은 파랑" },
+    { hue: [220, 240], sat: [60, 85], light: [40, 60], name: "로얄블루" },
+    { hue: [200, 220], sat: [50, 75], light: [65, 80], name: "연한 하늘" },
+    { hue: [190, 210], sat: [85, 100], light: [45, 60], name: "코발트" },
+    { hue: [210, 230], sat: [40, 65], light: [35, 55], name: "짙은 파랑" },
+    { hue: [185, 205], sat: [70, 95], light: [55, 70], name: "천청" },
+    
+    // 남색/군청 계열 (8개)
+    { hue: [225, 245], sat: [60, 90], light: [30, 50], name: "군청" },
+    { hue: [230, 250], sat: [70, 100], light: [25, 40], name: "짙은 남색" },
+    { hue: [220, 240], sat: [50, 75], light: [35, 55], name: "감청" },
+    { hue: [235, 255], sat: [80, 100], light: [40, 60], name: "인디고" },
+    { hue: [225, 245], sat: [40, 65], light: [30, 50], name: "네이비" },
+    { hue: [230, 250], sat: [85, 100], light: [35, 50], name: "진한 군청" },
+    { hue: [220, 240], sat: [60, 85], light: [45, 65], name: "청람" },
+    { hue: [235, 255], sat: [70, 95], light: [50, 70], name: "밝은 인디고" },
+    
+    // 보라 계열 (10개)
+    { hue: [255, 280], sat: [60, 90], light: [40, 60], name: "보라" },
+    { hue: [270, 290], sat: [70, 100], light: [45, 65], name: "자주" },
+    { hue: [260, 280], sat: [80, 100], light: [50, 70], name: "밝은 보라" },
+    { hue: [255, 275], sat: [50, 75], light: [35, 55], name: "진한 보라" },
+    { hue: [280, 300], sat: [65, 95], light: [55, 75], name: "연보라" },
+    { hue: [265, 285], sat: [85, 100], light: [40, 55], name: "바이올렛" },
+    { hue: [270, 290], sat: [40, 65], light: [30, 50], name: "자주빛" },
+    { hue: [255, 275], sat: [90, 100], light: [55, 70], name: "라벤더" },
+    { hue: [275, 295], sat: [70, 95], light: [45, 60], name: "아메시스트" },
+    { hue: [260, 280], sat: [50, 75], light: [65, 80], name: "연한 라벤더" },
+    
+    // 자주/마젠타 계열 (8개)
+    { hue: [290, 320], sat: [70, 100], light: [45, 65], name: "마젠타" },
+    { hue: [300, 330], sat: [80, 100], light: [50, 70], name: "자홍" },
+    { hue: [295, 315], sat: [60, 85], light: [55, 75], name: "밝은 자주" },
+    { hue: [285, 310], sat: [70, 95], light: [35, 55], name: "진한 자주" },
+    { hue: [305, 325], sat: [85, 100], light: [60, 80], name: "연한 자홍" },
+    { hue: [290, 310], sat: [50, 75], light: [40, 60], name: "자줏빛" },
+    { hue: [300, 320], sat: [90, 100], light: [55, 70], name: "푸크시아" },
+    { hue: [295, 315], sat: [65, 90], light: [45, 65], name: "퍼플" },
+    
+    // 분홍 계열 (12개)
+    { hue: [320, 350], sat: [70, 100], light: [60, 80], name: "분홍" },
+    { hue: [330, 355], sat: [80, 100], light: [70, 90], name: "연분홍" },
+    { hue: [320, 345], sat: [60, 85], light: [50, 70], name: "핑크" },
+    { hue: [325, 350], sat: [90, 100], light: [75, 90], name: "밝은 분홍" },
+    { hue: [315, 340], sat: [50, 75], light: [55, 75], name: "장미" },
+    { hue: [330, 355], sat: [70, 95], light: [80, 95], name: "파스텔 핑크" },
+    { hue: [320, 345], sat: [85, 100], light: [65, 80], name: "핫핑크" },
+    { hue: [310, 335], sat: [60, 85], light: [45, 65], name: "진한 분홍" },
+    { hue: [325, 350], sat: [50, 75], light: [70, 85], name: "볼터치" },
+    { hue: [335, 360], sat: [75, 100], light: [70, 85], name: "연어" },
+    { hue: [320, 340], sat: [40, 65], light: [60, 80], name: "연한 장미" },
+    { hue: [330, 355], sat: [85, 100], light: [60, 75], name: "체리블로썸" },
+    
+    // 갈색 계열 (10개)
+    { hue: [15, 35], sat: [40, 70], light: [25, 45], name: "갈색" },
+    { hue: [20, 40], sat: [50, 80], light: [30, 50], name: "밤색" },
+    { hue: [25, 45], sat: [30, 60], light: [35, 55], name: "황갈색" },
+    { hue: [15, 30], sat: [35, 65], light: [20, 40], name: "초콜릿" },
+    { hue: [30, 50], sat: [40, 70], light: [40, 60], name: "모카" },
+    { hue: [20, 40], sat: [60, 90], light: [35, 55], name: "구리" },
+    { hue: [25, 45], sat: [25, 50], light: [30, 50], name: "세피아" },
+    { hue: [15, 35], sat: [50, 80], light: [25, 45], name: "흙" },
+    { hue: [30, 50], sat: [35, 65], light: [45, 65], name: "담황" },
+    { hue: [20, 40], sat: [45, 75], light: [30, 50], name: "밤" },
+    
+    // 무채색 (10개)
+    { hue: [0, 360], sat: [0, 10], light: [0, 10], name: "검정" },
+    { hue: [0, 360], sat: [0, 10], light: [10, 25], name: "진한 회색" },
+    { hue: [0, 360], sat: [0, 10], light: [25, 40], name: "어두운 회색" },
+    { hue: [0, 360], sat: [0, 10], light: [40, 55], name: "회색" },
+    { hue: [0, 360], sat: [0, 10], light: [55, 70], name: "중간 회색" },
+    { hue: [0, 360], sat: [0, 10], light: [70, 82], name: "연한 회색" },
+    { hue: [0, 360], sat: [0, 10], light: [82, 92], name: "밝은 회색" },
+    { hue: [0, 360], sat: [0, 10], light: [92, 100], name: "흰색" },
+    { hue: [0, 360], sat: [0, 8], light: [15, 30], name: "숯" },
+    { hue: [0, 360], sat: [0, 8], light: [75, 88], name: "은" },
+    
+    // 베이지/중립 계열 (10개)
+    { hue: [30, 50], sat: [10, 30], light: [60, 85], name: "베이지" },
+    { hue: [35, 55], sat: [15, 35], light: [70, 90], name: "밝은 베이지" },
+    { hue: [25, 45], sat: [10, 30], light: [50, 70], name: "모래" },
+    { hue: [30, 50], sat: [8, 25], light: [65, 85], name: "아이보리" },
+    { hue: [35, 55], sat: [20, 40], light: [55, 75], name: "밀" },
+    { hue: [40, 60], sat: [15, 35], light: [75, 92], name: "크림색" },
+    { hue: [25, 45], sat: [12, 30], light: [45, 65], name: "카키" },
+    { hue: [30, 50], sat: [18, 38], light: [60, 80], name: "황토색" },
+    { hue: [35, 55], sat: [10, 28], light: [70, 88], name: "연한 샌드" },
+    { hue: [28, 48], sat: [15, 35], light: [55, 75], name: "타페스트리" }
+  ],
+  
+  en: [
+    // Red family (10)
+    { hue: [355, 360], sat: [80, 100], light: [45, 65], name: "Red" },
+    { hue: [0, 5], sat: [80, 100], light: [45, 65], name: "Red" },
+    { hue: [0, 10], sat: [70, 100], light: [65, 80], name: "Light Red" },
+    { hue: [0, 10], sat: [70, 100], light: [30, 45], name: "Dark Red" },
+    { hue: [0, 10], sat: [70, 100], light: [20, 30], name: "Maroon" },
+    { hue: [350, 360], sat: [50, 70], light: [35, 55], name: "Crimson" },
+    { hue: [0, 8], sat: [50, 70], light: [40, 60], name: "Brick" },
+    { hue: [350, 360], sat: [70, 100], light: [25, 40], name: "Burgundy" },
+    { hue: [0, 10], sat: [85, 100], light: [50, 65], name: "Scarlet" },
+    { hue: [350, 360], sat: [60, 85], light: [45, 60], name: "Wine" },
+    
+    // Orange family (10)
+    { hue: [10, 20], sat: [80, 100], light: [50, 70], name: "Orange" },
+    { hue: [15, 25], sat: [90, 100], light: [55, 70], name: "Bright Orange" },
+    { hue: [20, 30], sat: [70, 90], light: [55, 70], name: "Apricot" },
+    { hue: [15, 25], sat: [80, 100], light: [65, 80], name: "Peach" },
+    { hue: [25, 35], sat: [70, 90], light: [50, 65], name: "Tangerine" },
+    { hue: [10, 20], sat: [70, 90], light: [40, 55], name: "Dark Orange" },
+    { hue: [20, 30], sat: [80, 100], light: [70, 85], name: "Light Peach" },
+    { hue: [15, 25], sat: [50, 70], light: [45, 60], name: "Ochre" },
+    { hue: [25, 35], sat: [80, 100], light: [60, 75], name: "Pumpkin" },
+    { hue: [10, 18], sat: [70, 95], light: [50, 65], name: "Carrot" },
+    
+    // Yellow family (10)
+    { hue: [50, 60], sat: [90, 100], light: [50, 65], name: "Yellow" },
+    { hue: [45, 55], sat: [80, 100], light: [65, 80], name: "Bright Yellow" },
+    { hue: [50, 60], sat: [70, 90], light: [75, 90], name: "Cream" },
+    { hue: [40, 50], sat: [80, 100], light: [45, 60], name: "Gold" },
+    { hue: [45, 55], sat: [90, 100], light: [55, 70], name: "Lemon" },
+    { hue: [40, 50], sat: [60, 80], light: [50, 65], name: "Mustard" },
+    { hue: [50, 60], sat: [50, 70], light: [70, 85], name: "Ivory" },
+    { hue: [35, 45], sat: [70, 90], light: [45, 60], name: "Golden" },
+    { hue: [50, 60], sat: [100, 100], light: [50, 60], name: "Sunflower" },
+    { hue: [55, 65], sat: [80, 100], light: [70, 85], name: "Banana" },
+    
+    // Lime family (8)
+    { hue: [65, 80], sat: [60, 90], light: [50, 70], name: "Lime Green" },
+    { hue: [70, 85], sat: [70, 100], light: [55, 75], name: "Lime" },
+    { hue: [75, 90], sat: [80, 100], light: [65, 80], name: "Bright Lime" },
+    { hue: [65, 80], sat: [50, 70], light: [45, 60], name: "Olive Green" },
+    { hue: [70, 85], sat: [60, 85], light: [60, 75], name: "Yellow Green" },
+    { hue: [80, 95], sat: [70, 90], light: [55, 70], name: "Chartreuse" },
+    { hue: [65, 75], sat: [40, 60], light: [40, 55], name: "Khaki" },
+    { hue: [75, 90], sat: [85, 100], light: [70, 85], name: "Neon Green" },
+    
+    // Green family (12)
+    { hue: [95, 140], sat: [70, 100], light: [35, 50], name: "Green" },
+    { hue: [110, 135], sat: [80, 100], light: [30, 45], name: "Dark Green" },
+    { hue: [100, 130], sat: [60, 85], light: [50, 70], name: "Light Green" },
+    { hue: [120, 145], sat: [50, 75], light: [25, 40], name: "Forest Green" },
+    { hue: [110, 130], sat: [90, 100], light: [40, 55], name: "Emerald" },
+    { hue: [95, 115], sat: [70, 90], light: [45, 60], name: "Grass" },
+    { hue: [125, 145], sat: [40, 65], light: [30, 50], name: "Hunter Green" },
+    { hue: [100, 120], sat: [85, 100], light: [50, 65], name: "Bright Green" },
+    { hue: [130, 150], sat: [60, 85], light: [35, 50], name: "Jade" },
+    { hue: [110, 130], sat: [30, 50], light: [35, 50], name: "Olive" },
+    { hue: [120, 140], sat: [70, 95], light: [40, 55], name: "Sea Green" },
+    { hue: [95, 110], sat: [75, 95], light: [55, 70], name: "Mint Green" },
+    
+    // Cyan family (10)
+    { hue: [150, 170], sat: [60, 90], light: [45, 65], name: "Teal" },
+    { hue: [160, 175], sat: [70, 100], light: [50, 70], name: "Turquoise" },
+    { hue: [165, 180], sat: [60, 85], light: [55, 75], name: "Light Cyan" },
+    { hue: [155, 170], sat: [50, 75], light: [40, 60], name: "Aquamarine" },
+    { hue: [170, 185], sat: [70, 95], light: [60, 80], name: "Aqua" },
+    { hue: [150, 165], sat: [80, 100], light: [45, 60], name: "Dark Teal" },
+    { hue: [160, 175], sat: [40, 65], light: [50, 70], name: "Light Teal" },
+    { hue: [165, 180], sat: [75, 100], light: [65, 80], name: "Mint" },
+    { hue: [155, 170], sat: [85, 100], light: [50, 65], name: "Emerald Green" },
+    { hue: [170, 185], sat: [50, 75], light: [55, 70], name: "Cyan" },
+    
+    // Blue family (12)
+    { hue: [185, 220], sat: [70, 100], light: [40, 60], name: "Blue" },
+    { hue: [190, 210], sat: [60, 90], light: [55, 75], name: "Sky Blue" },
+    { hue: [200, 220], sat: [80, 100], light: [30, 45], name: "Navy" },
+    { hue: [210, 230], sat: [70, 95], light: [45, 65], name: "Azure" },
+    { hue: [185, 205], sat: [50, 75], light: [50, 70], name: "Light Blue" },
+    { hue: [205, 225], sat: [85, 100], light: [35, 50], name: "Dark Blue" },
+    { hue: [195, 215], sat: [90, 100], light: [50, 65], name: "Bright Blue" },
+    { hue: [220, 240], sat: [60, 85], light: [40, 60], name: "Royal Blue" },
+    { hue: [200, 220], sat: [50, 75], light: [65, 80], name: "Pale Blue" },
+    { hue: [190, 210], sat: [85, 100], light: [45, 60], name: "Cobalt" },
+    { hue: [210, 230], sat: [40, 65], light: [35, 55], name: "Deep Blue" },
+    { hue: [185, 205], sat: [70, 95], light: [55, 70], name: "Cerulean" },
+    
+    // Indigo family (8)
+    { hue: [225, 245], sat: [60, 90], light: [30, 50], name: "Indigo" },
+    { hue: [230, 250], sat: [70, 100], light: [25, 40], name: "Dark Indigo" },
+    { hue: [220, 240], sat: [50, 75], light: [35, 55], name: "Midnight Blue" },
+    { hue: [235, 255], sat: [80, 100], light: [40, 60], name: "Persian Blue" },
+    { hue: [225, 245], sat: [40, 65], light: [30, 50], name: "Navy Blue" },
+    { hue: [230, 250], sat: [85, 100], light: [35, 50], name: "Sapphire" },
+    { hue: [220, 240], sat: [60, 85], light: [45, 65], name: "Slate Blue" },
+    { hue: [235, 255], sat: [70, 95], light: [50, 70], name: "Periwinkle" },
+    
+    // Purple family (10)
+    { hue: [255, 280], sat: [60, 90], light: [40, 60], name: "Purple" },
+    { hue: [270, 290], sat: [70, 100], light: [45, 65], name: "Violet" },
+    { hue: [260, 280], sat: [80, 100], light: [50, 70], name: "Bright Purple" },
+    { hue: [255, 275], sat: [50, 75], light: [35, 55], name: "Dark Purple" },
+    { hue: [280, 300], sat: [65, 95], light: [55, 75], name: "Lavender" },
+    { hue: [265, 285], sat: [85, 100], light: [40, 55], name: "Deep Violet" },
+    { hue: [270, 290], sat: [40, 65], light: [30, 50], name: "Plum" },
+    { hue: [255, 275], sat: [90, 100], light: [55, 70], name: "Lilac" },
+    { hue: [275, 295], sat: [70, 95], light: [45, 60], name: "Amethyst" },
+    { hue: [260, 280], sat: [50, 75], light: [65, 80], name: "Pale Lavender" },
+    
+    // Magenta family (8)
+    { hue: [290, 320], sat: [70, 100], light: [45, 65], name: "Magenta" },
+    { hue: [300, 330], sat: [80, 100], light: [50, 70], name: "Fuchsia" },
+    { hue: [295, 315], sat: [60, 85], light: [55, 75], name: "Bright Magenta" },
+    { hue: [285, 310], sat: [70, 95], light: [35, 55], name: "Dark Magenta" },
+    { hue: [305, 325], sat: [85, 100], light: [60, 80], name: "Light Fuchsia" },
+    { hue: [290, 310], sat: [50, 75], light: [40, 60], name: "Orchid" },
+    { hue: [300, 320], sat: [90, 100], light: [55, 70], name: "Hot Pink" },
+    { hue: [295, 315], sat: [65, 90], light: [45, 65], name: "Cerise" },
+    
+    // Pink family (12)
+    { hue: [320, 350], sat: [70, 100], light: [60, 80], name: "Pink" },
+    { hue: [330, 355], sat: [80, 100], light: [70, 90], name: "Light Pink" },
+    { hue: [320, 345], sat: [60, 85], light: [50, 70], name: "Rose" },
+    { hue: [325, 350], sat: [90, 100], light: [75, 90], name: "Pastel Pink" },
+    { hue: [315, 340], sat: [50, 75], light: [55, 75], name: "Coral" },
+    { hue: [330, 355], sat: [70, 95], light: [80, 95], name: "Baby Pink" },
+    { hue: [320, 345], sat: [85, 100], light: [65, 80], name: "Hot Pink" },
+    { hue: [310, 335], sat: [60, 85], light: [45, 65], name: "Deep Pink" },
+    { hue: [325, 350], sat: [50, 75], light: [70, 85], name: "Blush" },
+    { hue: [335, 360], sat: [75, 100], light: [70, 85], name: "Salmon" },
+    { hue: [320, 340], sat: [40, 65], light: [60, 80], name: "Tea Rose" },
+    { hue: [330, 355], sat: [85, 100], light: [60, 75], name: "Cherry Blossom" },
+    
+    // Brown family (10)
+    { hue: [15, 35], sat: [40, 70], light: [25, 45], name: "Brown" },
+    { hue: [20, 40], sat: [50, 80], light: [30, 50], name: "Chestnut" },
+    { hue: [25, 45], sat: [30, 60], light: [35, 55], name: "Tan" },
+    { hue: [15, 30], sat: [35, 65], light: [20, 40], name: "Chocolate" },
+    { hue: [30, 50], sat: [40, 70], light: [40, 60], name: "Mocha" },
+    { hue: [20, 40], sat: [60, 90], light: [35, 55], name: "Copper" },
+    { hue: [25, 45], sat: [25, 50], light: [30, 50], name: "Sepia" },
+    { hue: [15, 35], sat: [50, 80], light: [25, 45], name: "Sienna" },
+    { hue: [30, 50], sat: [35, 65], light: [45, 65], name: "Caramel" },
+    { hue: [20, 40], sat: [45, 75], light: [30, 50], name: "Mahogany" },
+    
+    // Grayscale (10)
+    { hue: [0, 360], sat: [0, 10], light: [0, 10], name: "Black" },
+    { hue: [0, 360], sat: [0, 10], light: [10, 25], name: "Dark Gray" },
+    { hue: [0, 360], sat: [0, 10], light: [25, 40], name: "Charcoal" },
+    { hue: [0, 360], sat: [0, 10], light: [40, 55], name: "Gray" },
+    { hue: [0, 360], sat: [0, 10], light: [55, 70], name: "Medium Gray" },
+    { hue: [0, 360], sat: [0, 10], light: [70, 82], name: "Light Gray" },
+    { hue: [0, 360], sat: [0, 10], light: [82, 92], name: "Silver" },
+    { hue: [0, 360], sat: [0, 10], light: [92, 100], name: "White" },
+    { hue: [0, 360], sat: [0, 8], light: [15, 30], name: "Ash" },
+    { hue: [0, 360], sat: [0, 8], light: [75, 88], name: "Platinum" },
+    
+    // Beige/Neutral family (10)
+    { hue: [30, 50], sat: [10, 30], light: [60, 85], name: "Beige" },
+    { hue: [35, 55], sat: [15, 35], light: [70, 90], name: "Light Beige" },
+    { hue: [25, 45], sat: [10, 30], light: [50, 70], name: "Sand" },
+    { hue: [30, 50], sat: [8, 25], light: [65, 85], name: "Ivory" },
+    { hue: [35, 55], sat: [20, 40], light: [55, 75], name: "Wheat" },
+    { hue: [40, 60], sat: [15, 35], light: [75, 92], name: "Cream" },
+    { hue: [25, 45], sat: [12, 30], light: [45, 65], name: "Khaki" },
+    { hue: [30, 50], sat: [18, 38], light: [60, 80], name: "Buff" },
+    { hue: [35, 55], sat: [10, 28], light: [70, 88], name: "Vanilla" },
+    { hue: [28, 48], sat: [15, 35], light: [55, 75], name: "Taupe" }
+  ]
+};
+
+//NOTE - 색상 이름 설정 (전역 변수)
+let colorNameLanguage = 'ko'; // 'ko' 또는 'en'
+let showColorNames = true; // 이름 표시 여부
+
+//NOTE - 색상 이름 찾기
+function getColorName(hex, language = colorNameLanguage) {
+  const rgb = hexToRgb(hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  const database = colorNames[language];
+
+  // 가장 일치하는 색상 찾기
+  let bestMatch = null;
+  let bestScore = -1;
+
+  for (const colorDef of database) {
+    let score = 0;
+
+    // 색조 확인
+    let hueMatch = false;
+    if (colorDef.hue[0] <= colorDef.hue[1]) {
+      // 일반적인 범위
+      if (hsl.h >= colorDef.hue[0] && hsl.h <= colorDef.hue[1]) {
+        hueMatch = true;
+      }
+    } else {
+      // 0도를 넘어가는 경우 (예: 345-360, 0-15)
+      if (hsl.h >= colorDef.hue[0] || hsl.h <= colorDef.hue[1]) {
+        hueMatch = true;
+      }
+    }
+
+    // 채도 확인
+    const satMatch = hsl.s >= colorDef.sat[0] && hsl.s <= colorDef.sat[1];
+
+    // 명도 확인
+    const lightMatch = hsl.l >= colorDef.light[0] && hsl.l <= colorDef.light[1];
+
+    // 점수 계산
+    if (hueMatch) score += 50;
+    if (satMatch) score += 25;
+    if (lightMatch) score += 25;
+
+    // 부분 일치 보너스
+    if (!satMatch) {
+      const satDiff = Math.min(
+        Math.abs(hsl.s - colorDef.sat[0]),
+        Math.abs(hsl.s - colorDef.sat[1])
+      );
+      score += Math.max(0, 25 - satDiff / 4);
+    }
+
+    if (!lightMatch) {
+      const lightDiff = Math.min(
+        Math.abs(hsl.l - colorDef.light[0]),
+        Math.abs(hsl.l - colorDef.light[1])
+      );
+      score += Math.max(0, 25 - lightDiff / 4);
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = colorDef.name;
+    }
+  }
+
+  return bestMatch || (language === 'ko' ? '알 수 없음' : 'Unknown');
+}
+
+//NOTE - 색상 이름 토글 버튼
+function toggleColorNames() {
+  showColorNames = !showColorNames;
+  displayPalette();
+
+  const btn = document.getElementById('colorNameBtn');
+  if (btn) {
+    btn.classList.toggle('active', showColorNames);
+    btn.innerHTML = showColorNames ? '🏷 이름 표시 중' : '🏷 이름 표시';
+  }
+
+  showToast(showColorNames ? '색상 이름이 표시됩니다 🏷' : '색상 이름이 숨겨집니다');
+  saveColorNameSettings();
+}
+
+//NOTE - 언어 전환
+function toggleColorNameLanguage() {
+  colorNameLanguage = colorNameLanguage === 'ko' ? 'en' : 'ko';
+
+  if (showColorNames) {
+    displayPalette();
+  }
+
+  const btn = document.getElementById('langToggleBtn');
+  if (btn) {
+    btn.innerHTML = colorNameLanguage === 'ko' ? '🇰🇷 한국어' : '🇺🇸 English';
+  }
+
+  showToast(colorNameLanguage === 'ko' ? '한국어로 표시됩니다 🇰🇷' : 'Displaying in English 🇺🇸');
+  saveColorNameSettings();
+}
+
+//NOTE - 색상 이름 설정 초기화
+function initColorNameSettings() {
+  // localStorage에서 설정 불러오기
+  const savedShowNames = localStorage.getItem('showColorNames');
+  const savedLanguage = localStorage.getItem('colorNameLanguage');
+
+  if (savedShowNames !== null) {
+    showColorNames = savedShowNames === 'true';
+  }
+
+  if (savedLanguage) {
+    colorNameLanguage = savedLanguage;
+  }
+
+  // 버튼 상태 업데이트
+  const nameBtn = document.getElementById('colorNameBtn');
+  const langBtn = document.getElementById('langToggleBtn');
+
+  if (nameBtn) {
+    nameBtn.classList.toggle('active', showColorNames);
+    nameBtn.innerHTML = showColorNames ? '🏷 이름 표시 중' : '🏷 이름 표시';
+  }
+
+  if (langBtn) {
+    langBtn.innerHTML = colorNameLanguage === 'ko' ? '🇰🇷 한국어' : '🇺🇸 English';
+  }
+}
+
+//NOTE - 설정 저장
+function saveColorNameSettings() {
+  localStorage.setItem('showColorNames', showColorNames);
+  localStorage.setItem('colorNameLanguage', colorNameLanguage);
 }

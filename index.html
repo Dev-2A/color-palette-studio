@@ -68,51 +68,64 @@
 
     <!-- Control Buttons -->
     <div class="controls">
-      <!-- Main Buttons -->
-      <button class="btn btn-primary" id="generateBtn">
-        <span>🎲 새 팔레트 생성</span>
-      </button>
+      <!-- Main Action Buttons -->
+      <div class="button-group">
+        <button class="btn btn-primary" id="generateBtn">
+          <span>🎲 새 팔레트 생성</span>
+        </button>
 
-      <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>
-        <span>↩ 취소</span>
-      </button>
+        <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>
+          <span>↩ 취소</span>
+        </button>
 
-      <button class="btn btn-secondary" id="redoBtn" onclick="redo()" disabled>
-        <span>↪ 다시</span>
-      </button>
+        <button class="btn btn-secondary" id="redoBtn" onclick="redo()" disabled>
+          <span>↪ 다시</span>
+        </button>
 
-      <button class="btn btn-secondary" id="saveBtn">
-        <span>💾 팔레트 저장</span>
-      </button>
+        <button class="btn btn-secondary" id="saveBtn">
+          <span>💾 저장</span>
+        </button>
 
-      <button class="btn btn-secondary" id="eyeDropperBtn" style="display: none;">
-        <span>💉 색상 추출</span>
-      </button>
+        <button class="btn btn-secondary" id="eyeDropperBtn" style="display: none;">
+          <span>💉 추출</span>
+        </button>
+      </div>
 
-      <button class="btn btn-secondary" onclick="createExportModal()">
-        <span>📥 내보내기</span>
-      </button>
+      <!-- Utility Buttons -->
+      <div class="button-group">
+        <button class="btn btn-secondary" onclick="createExportModal()">
+          <span>📥 내보내기</span>
+        </button>
 
-      <button class="btn btn-secondary" onclick="createGradientModal()">
-        <span>🌈 그라디언트</span>
-      </button>
+        <button class="btn btn-secondary" onclick="createGradientModal()">
+          <span>🌈 그라디언트</span>
+        </button>
 
-      <button class="btn btn-secondary" onclick="sharePalette()">
-        <span>🔗 공유</span>
-      </button>
+        <button class="btn btn-secondary" onclick="sharePalette()">
+          <span>🔗 공유</span>
+        </button>
 
-      <button class="btn btn-secondary" onclick="showHistoryModal()">
-        <span>📜 히스토리</span>
-        <small id="historyCount" class="history-badge">0/50</small>
-      </button>
+        <button class="btn btn-secondary" onclick="showHistoryModal()">
+          <span>📜 히스토리</span>
+          <small id="historyCount" class="history-badge">0/50</small>
+        </button>
 
-      <button class="btn btn-secondary" onclick="showScoreModal()">
-        <span>🎯 팔레트 분석</span>
-      </button>
+        <button class="btn btn-secondary" onclick="showScoreModal()">
+          <span>🎯 분석</span>
+        </button>
 
-      <button class="btn btn-secondary" onclick="showColorBlindModal()">
-        <span>👁 색맹 모드</span>
-      </button>
+        <button class="btn btn-secondary" onclick="showColorBlindModal()">
+          <span>👁 색맹</span>
+        </button>
+
+        <button class="btn btn-secondary" id="compareBtn" onclick="openCompareMode()">
+          <span>🔄 비교</span>
+        </button>
+
+        <button class="btn btn-secondary" id="liveCompareBtn" onclick="toggleLiveCompare()">
+          <span>⚡실시간</span>
+        </button>
+      </div>
 
       <!-- Color Mode Selector -->
       <div class="mode-selector">
@@ -123,9 +136,19 @@
         <button class="mode-btn" data-mode="monochromatic">단색조</button>
       </div>
 
+      <!-- Color Name Control -->
+      <div class="color-name-controls">
+        <button id="colorNameBtn" class="action-btn" onclick="toggleColorNames()">
+          🏷 이름 표시
+        </button>
+        <button id="langToggleBtn" class="action-btn" onclick="toggleColorNameLanguage()">
+          🇰🇷 한국어
+        </button>
+      </div>
+
       <!-- Theme Selector -->
       <div class="theme-selector">
-        <div class="theme-label">테마 선택:</div>
+        <div class="theme-label">테마 선택</div>
         <div class="theme-buttons">
           <button class="theme-btn" data-theme="pastel" title="부드럽고 은은한 색감">
             <span class="theme-icon">🌸</span>
