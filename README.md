@@ -2,7 +2,7 @@
 
 > 디자이너와 개발자를 위한 올인원 색상 팔레트 생성 및 관리 도구
 
-![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.5.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Chrome](https://img.shields.io/badge/Chrome-95%2B-green.svg)
 ![Edge](https://img.shields.io/badge/Edge-95%2B-green.svg)
@@ -64,8 +64,8 @@ Color Palette Studio는 웹 디자인과 개발에 필요한 조화로운 색상
 
 ### 🏷 색상 이름 표시 `v2.5 NEW`
 - **다국어 색상 이름**
-  - 🇰🇷 한국어: 48개 색상 이름
-  - 🇺🇸 English: 48개 색상 이름
+  - 🇰🇷 한국어: 140개 색상 이름
+  - 🇺🇸 English: 140개 색상 이름
 - **지능형 매칭**
   - HSL 기반 자동 판별
   - 색조/채도/명도 범위 분석
@@ -213,16 +213,180 @@ Color Palette Studio는 웹 디자인과 개발에 필요한 조화로운 색상
 
 ## 📁 프로젝트 구조
 
+### 🎯 모듈화된 파일 구조 (v2.5.1)
+
+프로젝트는 **기능별로 분리된 모듈 구조**로 설계되어 유지보수와 확장이 용이합니다.
+
 ```
 color-palette-studio/
 │
-├── index.html          # HTML 메인 파일
-├── css/
-│   └── styles.css     # 스타일시트 (다크 테마)
-├── js/
-│   └── script.js      # JavaScript 로직
-└── README.md          # 프로젝트 문서
+├── index.html                          # HTML 메인 파일
+│
+├── css/                                # 스타일시트 (총 16개 파일)
+│   ├── base/                          # 기본 설정 (2개)
+│   │   ├── variables.css              # CSS 변수 및 테마 설정
+│   │   └── reset.css                  # 기본 레이아웃 및 리셋
+│   │
+│   ├── layout/                        # 레이아웃 (1개)
+│   │   └── header.css                 # 헤더 스타일
+│   │
+│   ├── components/                    # UI 컴포넌트 (4개)
+│   │   ├── buttons.css                # 모든 버튼 스타일
+│   │   ├── palette.css                # 팔레트 & 색상 카드
+│   │   ├── saved-palettes.css         # 저장된 팔레트
+│   │   └── toast.css                  # 토스트 메시지
+│   │
+│   ├── features/                      # 기능별 스타일 (7개)
+│   │   ├── export.css                 # 내보내기 모달
+│   │   ├── eyedropper.css             # Eye Dropper
+│   │   ├── gradient.css               # 그라디언트 생성기
+│   │   ├── history.css                # 히스토리
+│   │   ├── scoring.css                # 점수 분석
+│   │   ├── comparison.css             # 팔레트 비교
+│   │   └── colorblindness.css         # 색각 이상 시뮬레이션
+│   │
+│   └── utils/                         # 유틸리티 (2개)
+│       ├── responsive.css             # 반응형 디자인
+│       └── utilities.css              # 공통 유틸리티 클래스
+│
+├── js/                                # JavaScript (총 19개 파일)
+│   ├── core/                          # 핵심 상태 관리 (1개)
+│   │   └── state.js                   # 전역 변수 및 상태
+│   │
+│   ├── utils/                         # 유틸리티 함수 (3개)
+│   │   ├── domUtils.js                # DOM 요소 참조
+│   │   ├── colorUtils.js              # 색상 변환 (HEX↔RGB↔HSL)
+│   │   └── generalUtils.js            # 클립보드, 토스트 등
+│   │
+│   ├── generators/                    # 색상 생성기 (2개)
+│   │   ├── harmonyGenerators.js       # 색상 조화 알고리즘
+│   │   └── paletteGenerator.js        # 팔레트 생성 및 표시
+│   │
+│   ├── storage/                       # 데이터 저장 (1개)
+│   │   └── paletteStorage.js          # 로컬 저장/불러오기
+│   │
+│   ├── features/                      # 주요 기능 (8개)
+│   │   ├── export.js                  # 5가지 포맷 내보내기
+│   │   ├── share.js                   # URL 공유
+│   │   ├── eyeDropper.js              # 색상 추출 (Eye Dropper API)
+│   │   ├── gradient.js                # 그라디언트 생성기
+│   │   ├── history.js                 # 실행 취소/다시 실행
+│   │   ├── comparison.js              # 팔레트 비교 모드
+│   │   ├── finetuning.js              # 색상 미세 조정 슬라이더
+│   │   └── colorNames.js              # 색상 이름 표시
+│   │
+│   ├── analysis/                      # 분석 기능 (3개)
+│   │   ├── temperature.js             # 색상 온도 분석
+│   │   ├── scoring.js                 # 팔레트 점수 시스템
+│   │   └── colorBlindness.js          # 색각 이상 시뮬레이션
+│   │
+│   └── app.js                         # 앱 초기화 및 이벤트 리스너
+│
+├── backup/                            # 백업 파일
+│   ├── script.js.backup               # 원본 script.js (171KB)
+│   └── styles.css.backup              # 원본 styles.css (71KB)
+│
+└── README.md                          # 프로젝트 문서
 ```
+
+### 🔧 파일 구조 개선 이점
+
+**1. 모듈화 (Modularity)**
+- 각 파일이 단일 책임만 담당
+- 기능별로 명확하게 분리
+- 새 기능 추가 시 해당 폴더에만 파일 추가
+
+**2. 유지보수성 (Maintainability)**
+- 버그 수정 시 관련 파일만 확인
+- 코드 충돌 최소화
+- 명확한 파일 이름으로 빠른 탐색
+
+**3. 성능 (Performance)**
+- 필요한 모듈만 선택적 로드 가능 (향후)
+- 병렬 다운로드로 로딩 속도 향상
+- 브라우저 캐싱 최적화
+
+**4. 협업 (Collaboration)**
+- 여러 개발자가 동시에 작업 가능
+- Git 머지 충돌 감소
+- 명확한 파일 구조로 온보딩 용이
+
+**5. 확장성 (Scalability)**
+- 새로운 기능 추가 시 기존 코드 영향 최소화
+- 플러그인 형태로 기능 추가 가능
+- 테스트 및 디버깅 용이
+
+### 📦 파일 크기 최적화
+
+| 구분 | 기존 (v2.5.0) | 현재 (v2.5.1) | 개선 |
+|------|---------------|---------------|------|
+| **JavaScript** | 1개 파일 (171KB) | 19개 파일 (171KB) | ✅ 모듈화 |
+| **CSS** | 1개 파일 (71KB) | 16개 파일 (71KB) | ✅ 모듈화 |
+| **총 파일 수** | 2개 | 35개 | ✅ 관리 용이 |
+| **평균 파일 크기** | 121KB | 6.9KB | ✅ 90% 감소 |
+
+### 🗂️ 파일별 역할 상세 설명
+
+#### JavaScript 모듈
+
+**Core & Utils (4개)**
+- `state.js` (688B): 전역 변수, 팔레트 상태, 테마/모드 관리
+- `domUtils.js` (366B): DOM 요소 캐싱 및 참조
+- `colorUtils.js` (1.7KB): HEX↔RGB↔HSL 변환 알고리즘
+- `generalUtils.js` (1.4KB): 클립보드, 토스트, 모드 전환
+
+**Generators (2개)**
+- `harmonyGenerators.js` (7.0KB): 보색/유사색/삼각색/단색조/테마 생성
+- `paletteGenerator.js` (5.2KB): UI 렌더링, 색상 카드 생성
+
+**Storage (1개)**
+- `paletteStorage.js` (12KB): 로컬 저장소, 태그/필터/검색 시스템
+
+**Features (8개)**
+- `export.js` (6.4KB): JSON/CSS/SCSS/Tailwind/JS 내보내기
+- `share.js` (1.6KB): URL 공유 링크 생성
+- `eyeDropper.js` (7.3KB): Eye Dropper API, 색상 교체
+- `gradient.js` (14KB): Linear/Radial/Conic 그라디언트
+- `history.js` (7.7KB): 실행 취소/다시 실행, 타임라인
+- `comparison.js` (35KB): 팔레트 비교, 실시간 비교
+- `finetuning.js` (13KB): HSL 슬라이더 미세 조정
+- `colorNames.js` (26KB): 한/영 색상 이름 매칭
+
+**Analysis (3개)**
+- `temperature.js` (1.4KB): 따뜻함/차가움/중립 온도 분석
+- `scoring.js` (15KB): 5가지 평가 기준, 등급 시스템
+- `colorBlindness.js` (18KB): Brettel 알고리즘, Delta E 계산
+
+**App (1개)**
+- `app.js` (1.9KB): 이벤트 리스너, 키보드 단축키, 초기화
+
+#### CSS 모듈
+
+**Base (2개)**
+- `variables.css`: CSS 변수 (색상, 간격, 폰트)
+- `reset.css`: 브라우저 기본 스타일 초기화
+
+**Layout (1개)**
+- `header.css`: 헤더, 타이틀, 그라디언트 효과
+
+**Components (4개)**
+- `buttons.css`: 모든 버튼, 모드 선택자, 테마 버튼
+- `palette.css`: 팔레트 컨테이너, 색상 카드, 잠금 버튼
+- `saved-palettes.css`: 저장 모달, 필터, 검색, 팔레트 그리드
+- `toast.css`: 토스트 메시지 애니메이션
+
+**Features (7개)**
+- `export.css`: 내보내기 모달, 포맷 선택
+- `eyedropper.css`: Eye Dropper 모달, 색상 교체
+- `gradient.css`: 그라디언트 생성기, 프리셋
+- `history.css`: 히스토리 타임라인, 통계
+- `scoring.css`: 점수 배지, 분석 모달, 차트
+- `comparison.css`: 비교 모달, 실시간 패널
+- `colorblindness.css`: 색각 이상 시뮬레이션, 필터
+
+**Utils (2개)**
+- `responsive.css`: 미디어 쿼리, 모바일 대응
+- `utilities.css`: 공통 클래스, 스크롤바, 닫기 버튼
 
 ## 🛠️ 설치 및 실행
 
@@ -519,7 +683,26 @@ npx http-server
 
 ## 🚧 업데이트 내역
 
-### v2.5.0 (2025.10.23.) `LATEST`
+### v2.5.1 (2025.10.24.) `LATEST`
+- ✅ **파일 구조 대규모 리팩토링**
+  - 단일 파일에서 모듈화 구조로 전환
+  - JavaScript: 1개 → 19개 파일
+  - CSS: 1개 → 16개 파일
+  - 기능별 디렉토리 구조 (core, utils, generators, features, analysis 등)
+- ✅ **UI/UX 개선**
+  - 팔레트 비교 모달 레이아웃 개선
+  - 닫기 버튼 크기 및 디자인 일관성 향상
+  - 텍스트 세로 표시 문제 수정
+- ✅ **코드 품질 향상**
+  - 파일별 단일 책임 원칙 적용
+  - 중복 스타일 제거 및 공통 클래스 추가
+  - 모듈 간 의존성 명확화
+- ✅ **유지보수성 개선**
+  - 평균 파일 크기 90% 감소 (121KB → 6.9KB)
+  - 원본 파일 백업 (backup 폴더)
+  - 명확한 파일 이름 및 주석
+
+### v2.5.0 (2025.10.23.)
 - ✅ **팔레트 비교 모드**
   - 두 팔레트 나란히 비교
   - 종합 점수, 대비, 조화, 접근성 비교
@@ -535,7 +718,7 @@ npx http-server
   - 시각적 그라디언트 표시
   - 히스토리 자동 저장
 - ✅ **색상 이름 표시 기능**
-  - 한국어/영어 색상 이름 (각 48개)
+  - 한국어/영어 색상 이름 (각 140개)
   - HSL 기반 자동 매칭 알고리즘
   - 토글 버튼으로 표시/숨김
   - 언어 전환 버튼
@@ -622,21 +805,43 @@ npx http-server
 
 ## 📊 프로젝트 통계
 
+### 코드 및 파일
 - ⭐ **총 코드 라인**: ~5,000 lines
-- 📦 **프로젝트 크기**: ~170KB
+- 📦 **프로젝트 크기**: ~242KB (JS: 171KB, CSS: 71KB)
+- 📁 **총 파일 수**: 37개 (HTML: 1, JS: 19, CSS: 16, Backup: 2)
+- 📊 **평균 파일 크기**: 6.9KB (모듈화 전: 121KB)
 - ⚡ **로딩 속도**: <1초
-- 🎨 **지원 색상**: 16,777,216개
+
+### 기능 통계
+- 🎨 **지원 색상**: 16,777,216개 (24-bit RGB)
 - 📜 **최대 히스토리**: 50개
 - 💾 **최대 저장 팔레트**: 20개
-- 🌈 **그라디언트 타입**: 3종
-- 📥 **내보내기 형식**: 5종
-- 🎯 **분석 기준**: 6가지
-- 🌡 **온도 분류**: 3가지
-- 🎨 **테마 프리셋: 8종
+- 🌈 **그라디언트 타입**: 3종 (Linear, Radial, Conic)
+- 📥 **내보내기 형식**: 5종 (JSON, CSS, SCSS, Tailwind, JS)
+- 🎯 **분석 기준**: 5가지 (대비, 조화, 균형, 다양성, 접근성)
+- 🌡 **온도 분류**: 3가지 (따뜻/차가움/중립)
+- 🎨 **테마 프리셋**: 8종
 - 🏷 **인기 태그**: 18개
 - 👁 **색각 이상 타입**: 5종
 - 📈 **점수 범위**: 0-100점
-- 🏷 **색상 이름**: 100개 (한/영)
+- 🏷 **색상 이름**: 280개 (한국어 140개, English 140개)
+- ⌨️ **키보드 단축키**: 6개
+
+### 모듈 통계
+- 🧩 **JavaScript 모듈**: 19개
+  - Core: 1개
+  - Utils: 3개
+  - Generators: 2개
+  - Storage: 1개
+  - Features: 8개
+  - Analysis: 3개
+  - App: 1개
+- 🎨 **CSS 모듈**: 16개
+  - Base: 2개
+  - Layout: 1개
+  - Components: 4개
+  - Features: 7개
+  - Utils: 2개
 
 ## 🏆 주요 특징
 
@@ -659,13 +864,30 @@ npx http-server
 5. Open a Pull Request
 
 ### 기여 가이드라인
+
+**코드 작성**
 - **코드 스타일**: 2 spaces 들여쓰기
-- **주석**: 한글 주석 권장
-- **커밋 메시지**: 명확한 변경사항 설명
+- **주석**: 한글 주석 권장, 각 파일 상단에 기능 설명 추가
+- **파일 구조**: 기능별로 적절한 디렉토리에 배치
+  - 새 기능 → `js/features/` 또는 `css/features/`
+  - 유틸리티 → `js/utils/` 또는 `css/utils/`
+  - 분석 기능 → `js/analysis/` 또는 `css/features/`
+- **모듈화**: 각 파일은 단일 책임만 담당
+- **의존성**: 필요한 모듈을 HTML에서 올바른 순서로 로드
+
+**품질 관리**
+- **커밋 메시지**: 명확한 변경사항 설명 (예: "✨ 색상 필터 기능 추가")
 - **테스트**: Chrome, Firefox, Edge에서 테스트
 - **알고리즘**: 색상 이론 근거 제시
 - **문서화**: 새 기능 추가 시 README 업데이트
 - **접근성**: WCAG 가이드라인 준수
+
+**파일 추가 시 체크리스트**
+- [ ] 적절한 디렉토리에 파일 생성
+- [ ] 파일 상단에 설명 주석 추가
+- [ ] index.html에 스크립트/스타일시트 링크 추가
+- [ ] 다른 모듈과의 의존성 확인
+- [ ] README의 프로젝트 구조 섹션 업데이트
 
 ## 📝 라이선스
 

@@ -1,0 +1,98 @@
+/*!
+ * Responsive Design Styles
+ *
+ * This file contains all media queries and responsive design rules
+ * for various screen sizes (1024px, 768px, 480px breakpoints).
+ */
+
+/*!SECTION - 09. 반응형 디자인 */
+
+@media (max-width: 1024px) {
+  .btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .button-group {
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .palette-container {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .button-group {
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    min-height: 40px;
+  }
+
+  .mode-selector {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    flex: 1;
+    min-width: calc(33.33% - 0.5rem);
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .toast {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls {
+    gap: 1rem;
+  }
+
+  .button-group {
+    gap: 0.4rem;
+  }
+
+  .btn {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 38px;
+  }
+
+  .mode-btn {
+    min-width: calc(50% - 0.25rem);
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  #colorNameBtn,
+  #langToggleBtn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+}

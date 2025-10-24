@@ -1,0 +1,42 @@
+/*!
+ * Header Styles
+ *
+ * This file contains styles for the main header section including
+ * the title with gradient effect and glow animation, and the subtitle.
+ */
+
+/*!SECTION - 03. 헤더 스타일 */
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+
+  /* 그라디언트 텍스트 효과 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  /* 빛나는 효과 */
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+  }
+  to {
+    filter: drop-shadow(0 0 30px rgba(240, 147, 251, 0.5));
+  }
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}

@@ -1,0 +1,27 @@
+/*!
+ * Toast Message Styles
+ *
+ * This file contains styles for toast notification messages
+ * that appear in the bottom-right corner of the screen.
+ */
+
+/*!SECTION - 08. 토스트 메시지 */
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--accent);
+  transform: translateX(400px);
+  transition: transform 0.3s;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.toast.show {
+  transform: translateX(0);
+}

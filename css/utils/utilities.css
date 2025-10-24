@@ -1,0 +1,77 @@
+/*!
+ * Utility Classes and Scrollbar Styles
+ *
+ * This file contains utility classes for common use cases
+ * and custom scrollbar styling for webkit browsers.
+ */
+
+/*!SECTION - 10. 유틸리티 클래스 */
+
+.hidden {
+  display: none !important;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 모달 닫기 버튼 공통 스타일 */
+.modal-close,
+.modal-close-btn,
+.panel-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.modal-close:hover,
+.modal-close-btn:hover,
+.panel-close:hover {
+  background: rgba(255, 71, 87, 0.1);
+  color: #ff4757;
+  transform: translateY(-2px);
+}
+
+/* X 형태 닫기 버튼 (작은 사이즈) */
+.modal-close-btn,
+.panel-close {
+  padding: 0.25rem;
+  width: 28px;
+  height: 28px;
+  min-width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.modal-close-btn:hover,
+.panel-close:hover {
+  transform: scale(1.1);
+}
+
+/* 스크롤바 커스터마이징 (웹킷 브라우저) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

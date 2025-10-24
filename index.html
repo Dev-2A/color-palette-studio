@@ -6,7 +6,31 @@
   <title>Color Palette Studio</title>
 
   <!-- CSS Connect -->
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Base Styles -->
+  <link rel="stylesheet" href="css/base/variables.css">
+  <link rel="stylesheet" href="css/base/reset.css">
+
+  <!-- Layout -->
+  <link rel="stylesheet" href="css/layout/header.css">
+
+  <!-- Components -->
+  <link rel="stylesheet" href="css/components/buttons.css">
+  <link rel="stylesheet" href="css/components/palette.css">
+  <link rel="stylesheet" href="css/components/saved-palettes.css">
+  <link rel="stylesheet" href="css/components/toast.css">
+
+  <!-- Features -->
+  <link rel="stylesheet" href="css/features/export.css">
+  <link rel="stylesheet" href="css/features/eyedropper.css">
+  <link rel="stylesheet" href="css/features/gradient.css">
+  <link rel="stylesheet" href="css/features/history.css">
+  <link rel="stylesheet" href="css/features/scoring.css">
+  <link rel="stylesheet" href="css/features/comparison.css">
+  <link rel="stylesheet" href="css/features/colorblindness.css">
+
+  <!-- Utilities -->
+  <link rel="stylesheet" href="css/utils/responsive.css">
+  <link rel="stylesheet" href="css/utils/utilities.css">
 
   <!-- Add Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -204,6 +228,37 @@
   <div class="toast" id="toast"></div>
 
   <!-- JavaScript Connection -->
-  <script src="js/script.js"></script>
+  <!-- Core & State -->
+  <script src="js/core/state.js"></script>
+
+  <!-- Utilities -->
+  <script src="js/utils/domUtils.js"></script>
+  <script src="js/utils/colorUtils.js"></script>
+  <script src="js/utils/generalUtils.js"></script>
+
+  <!-- Generators -->
+  <script src="js/generators/harmonyGenerators.js"></script>
+  <script src="js/generators/paletteGenerator.js"></script>
+
+  <!-- Storage -->
+  <script src="js/storage/paletteStorage.js"></script>
+
+  <!-- Analysis -->
+  <script src="js/analysis/temperature.js"></script>
+  <script src="js/analysis/scoring.js"></script>
+  <script src="js/analysis/colorBlindness.js"></script>
+
+  <!-- Features -->
+  <script src="js/features/export.js"></script>
+  <script src="js/features/share.js"></script>
+  <script src="js/features/eyeDropper.js"></script>
+  <script src="js/features/gradient.js"></script>
+  <script src="js/features/history.js"></script>
+  <script src="js/features/comparison.js"></script>
+  <script src="js/features/finetuning.js"></script>
+  <script src="js/features/colorNames.js"></script>
+
+  <!-- App Initialization -->
+  <script src="js/app.js"></script>
 </body>
 </html>

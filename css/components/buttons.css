@@ -1,0 +1,458 @@
+/*!
+ * Button and Control Styles
+ *
+ * This file contains all button-related styles including:
+ * - Primary and secondary buttons
+ * - Mode selector buttons
+ * - Theme selector and preset buttons
+ * - Color name display buttons
+ * - Language toggle buttons
+ * - Responsive button styles
+ */
+
+/*!SECTION - 04. 컨트롤 버튼 스타일 */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+/* 버튼 그룹 래퍼 */
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #2a2a2a;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 모드 선택자 */
+.mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.mode-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.mode-btn:hover:not(.active) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.theme-selector {
+  width: 100%;
+  background: var(--bg-card);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.theme-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.theme-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 0.6rem;
+}
+
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.65rem 0.4rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.theme-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.theme-btn:hover::before {
+  left: 100%;
+}
+
+.theme-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+}
+
+.theme-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+.theme-btn.active .theme-name {
+  color: white;
+  font-weight: 700;
+}
+
+.theme-icon {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s;
+}
+
+.theme-btn:hover .theme-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.theme-btn.active .theme-icon {
+  transform: scale(1.1);
+  animation: themeIconBounce 0.6s ease;
+}
+
+@keyframes themeIconBounce {
+  0%, 100% { transform: scale(1.1); }
+  50% { transform: scale(1.25); }
+}
+
+.theme-name {
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: var(--transition);
+  text-align: center;
+}
+
+/* 테마별 호버 색상 효과 */
+.theme-btn[data-theme="pastel"]:hover {
+  background: rgba(255, 182, 193, 0.15);
+}
+
+.theme-btn[data-theme="neon"]:hover {
+  background: rgba(57, 255, 20, 0.15);
+}
+
+.theme-btn[data-theme="earth"]:hover {
+  background: rgba(139, 69, 19, 0.15);
+}
+
+.theme-btn[data-theme="ocean"]:hover {
+  background: rgba(0, 191, 255, 0.15);
+}
+
+.theme-btn[data-theme="space"]:hover {
+  background: rgba(138, 43, 226, 0.15);
+}
+
+.theme-btn[data-theme="sunset"]:hover {
+  background: rgba(255, 99, 71, 0.15);
+}
+
+.theme-btn[data-theme="forest"]:hover {
+  background: rgba(34, 139, 34, 0.15);
+}
+
+.theme-btn[data-theme="candy"]:hover {
+  background: rgba(255, 105, 180, 0.15);
+}
+
+/* 색상 이름 표시 기능 스타일 */
+
+.color-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border-radius: 12px;
+  margin: 0.6rem 0 0.4rem 0;
+  letter-spacing: 0.8px;
+  text-transform: capitalize;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInName 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.color-name::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.color-name:hover::before {
+  left: 100%;
+}
+
+@keyframes fadeInName {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.color-name:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 3px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* 색상 이름 버튼 스타일 */
+.color-name-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#colorNameBtn,
+#langToggleBtn {
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+#colorNameBtn:hover,
+#langToggleBtn:hover {
+  background: #2a2a2a;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+#colorNameBtn:active,
+#langToggleBtn:active {
+  transform: translateY(0);
+}
+
+#colorNameBtn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+#colorNameBtn.active:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+#langToggleBtn {
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* 색상 카드 레이아웃 조정 (이름 표시 시) */
+.color-card.has-name {
+  min-height: 380px;
+}
+
+.color-card.has-name .color-display {
+  height: 140px;
+}
+
+/* 반응형 디자인 - 색상 이름 */
+@media (max-width: 768px) {
+  .color-name {
+    font-size: 0.95rem;
+    padding: 0.65rem 0.8rem;
+    letter-spacing: 0.5px;
+  }
+
+  .color-name-controls {
+    gap: 0.8rem;
+    justify-content: center;
+  }
+
+  #colorNameBtn,
+  #langToggleBtn {
+    padding: 0.65rem 1.2rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .color-name {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.7rem;
+    letter-spacing: 0.3px;
+    margin: 0.5rem 0 0.3rem 0;
+  }
+
+  .color-name-controls {
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  #colorNameBtn,
+  #langToggleBtn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .color-card.has-name {
+    min-height: 350px;
+  }
+
+  .color-card.has-name .color-display {
+    height: 120px;
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .theme-buttons {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .theme-selector {
+    padding: 0.75rem;
+  }
+
+  .theme-buttons {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+  }
+
+  .theme-btn {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .theme-icon {
+    font-size: 1.4rem;
+  }
+
+  .theme-name {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
